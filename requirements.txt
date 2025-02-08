@@ -1,5 +1,12 @@
-Tkinter
-requests
-beautifulsoup4
-lxml
-pytest
+streamlit
+fastapi
+uvicorn
+pydantic
+openai
+anthropic
+httpx
+python-dotenv
+GitPython
+aiofiles
+jinja2
+python-multipart
