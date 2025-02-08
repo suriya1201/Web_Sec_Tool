@@ -3,7 +3,8 @@
 
 ## Setup
 
-1. Create venv ```python -m venv venv```
+1. Create venv in folder ```python -m venv venv```
+2. Activate venv ```call venv/Scripts/activate.bat```
 2. ```pip install -r requirements.txt```
 3. create .env file with the contents:
 ```
