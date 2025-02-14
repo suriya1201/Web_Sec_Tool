@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start OWASP ZAP",
+            "type": "shell",
+            "command": "zap.bat",
+            "args": [
+                "-daemon",
+                "-port", "8081",
+            ],
+            "problemMatcher": [],
+            "options": {
+                "cwd": "C:\\Program Files\\ZAP\\Zed Attack Proxy\\"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

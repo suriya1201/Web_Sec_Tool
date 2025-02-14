@@ -6,15 +6,19 @@ from utils.latex_generator import LatexGenerator
 import subprocess
 import os
 from datetime import datetime
+from analyzer.zap_scanner import scan_url
+
 
 # --- Helper Functions ---
 def is_valid_repo_url(url: str) -> bool:
     """Basic URL validation (you might want a more robust check)."""
     return url.startswith("http://") or url.startswith("https://")
 
+
 def is_valid_scan_url(url: str) -> bool:
     """Basic URL validation for scanning (you might want a more robust check)."""
     return url.startswith("http://") or url.startswith("https://")
+
 
 # --- UI Setup ---
 st.set_page_config(page_title="SeCoRA - AI SAST", layout="wide")
@@ -26,10 +30,30 @@ with st.sidebar:
     tabs = st.tabs(["Code Analysis", "Vulnerability Scanning"])
 
     with tabs[0]:
-        input_type = st.radio("Select Input Type", ["Upload Code File", "Provide Repository URL"])
+        input_type = st.radio(
+            "Select Input Type", ["Upload Code File", "Provide Repository URL"]
+        )
 
         if input_type == "Upload Code File":
-            uploaded_files = st.file_uploader("Upload Code File(s)", type=["py", "js", "java", "cpp", "c", "cs", "go", "rb", "php", "rs", "swift", 'kt', 'scala'], accept_multiple_files=True)
+            uploaded_files = st.file_uploader(
+                "Upload Code File(s)",
+                type=[
+                    "py",
+                    "js",
+                    "java",
+                    "cpp",
+                    "c",
+                    "cs",
+                    "go",
+                    "rb",
+                    "php",
+                    "rs",
+                    "swift",
+                    "kt",
+                    "scala",
+                ],
+                accept_multiple_files=True,
+            )
             if uploaded_files:
                 st.write(f"You have uploaded {len(uploaded_files)} file(s).")
             repo_url = None  # Ensure repo_url is defined
@@ -46,36 +70,47 @@ with st.sidebar:
 
     with tabs[1]:
         st.write("Vulnerability Scanning ( Injection and Broken Access Control )")
-    
+
         # Add a text box for the user's URL
-        scan_url = st.text_input("Enter URL to scan")
-        
+        target_url = st.text_input("Enter URL to scan")
+
         # Add options to scan other directories/pages
         scan_options = st.radio("Scan Options", ["Page Only", "Entire Website"])
-        
+
         # Add a button to start the scan
         scan_button = st.button("Start Scan")
 
-        if scan_button:
-            if scan_url:
-                if is_valid_scan_url(scan_url):
-                    st.write(f"Scanning URL: {scan_url} with option: {scan_options}")
-                    # Add your scanning logic here
-                else:
-                    st.error("Invalid URL. Please enter a valid URL starting with http:// or https://.")
-            else:
-                st.error("Please enter a URL to scan.")
-            
+if scan_button:
+    if target_url:
+        if is_valid_scan_url(target_url):
+            st.write(f"Scanning URL: {target_url} with option: {scan_options}")
+            scan_url(target_url, scan_options)
+            with st.spinner("Spider scan in progress..."):
+                # The following should be wrapped in a loop to show progress, assuming `zap.spider.status()` updates during the scan
+                progress = zap.spider.status()  # Example: fetching the progress
+                while progress != 100:  # Check the progress until it reaches 100%
+                    st.write(f"Spider scan in progress: {progress}%")
+                    progress = zap.spider.status()  # Update progress
+                st.success("Scan completed!")
+        else:
+            st.error(
+                "Invalid URL. Please enter a valid URL starting with http:// or https://."
+            )
+    else:
+        st.error("Please enter a URL to scan.")
+
 
 # --- Analysis Logic (using httpx for requests to FastAPI) ---
 async def analyze_code_file(files):
     async with httpx.AsyncClient() as client:
         files_data = []
         for file in files:
-            files_data.append(('files', (file.name, file.getvalue(), file.type)))
+            files_data.append(("files", (file.name, file.getvalue(), file.type)))
 
         try:
-            response = await client.post("http://localhost:8000/analyze/file", files=files_data)
+            response = await client.post(
+                "http://localhost:8000/analyze/file", files=files_data
+            )
             response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
             return VulnerabilityReport(**response.json())
         except httpx.RequestError as e:
@@ -88,14 +123,18 @@ async def analyze_code_file(files):
             st.error(f"Unexpected error: {e}")
             return None
 
+
 async def analyze_repo(repo_url, branch, scan_depth):
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post("http://localhost:8000/analyze/repository", json={
-                "repository_url": repo_url,
-                "branch": branch,
-                "scan_depth": scan_depth
-            })
+            response = await client.post(
+                "http://localhost:8000/analyze/repository",
+                json={
+                    "repository_url": repo_url,
+                    "branch": branch,
+                    "scan_depth": scan_depth,
+                },
+            )
             response.raise_for_status()
             return VulnerabilityReport(**response.json())
         except httpx.RequestError as e:
@@ -108,6 +147,7 @@ async def analyze_repo(repo_url, branch, scan_depth):
             st.error(f"Unexpected error: {e}")
             return None
 
+
 # --- Main Analysis Execution ---
 if analyze_button:
     if input_type == "Upload Code File" and uploaded_files:
@@ -119,21 +159,32 @@ if analyze_button:
                 st.subheader("Summary")
                 if report.summary:  # Check if summary is available
                     col1, col2, col3, col4, col5, col6 = st.columns(6)
-                    col1.metric("Total", report.summary['total'])
-                    col2.metric("Critical", report.summary['critical'])
-                    col3.metric("High", report.summary['high'])
-                    col4.metric("Medium", report.summary['medium'])
-                    col5.metric("Low", report.summary['low'])
-                    col6.metric("Info", report.summary['info'])
-                st.metric("Risk Score", f"{report.risk_score:.2f}" if report.risk_score is not None else "N/A")
+                    col1.metric("Total", report.summary["total"])
+                    col2.metric("Critical", report.summary["critical"])
+                    col3.metric("High", report.summary["high"])
+                    col4.metric("Medium", report.summary["medium"])
+                    col5.metric("Low", report.summary["low"])
+                    col6.metric("Info", report.summary["info"])
+                st.metric(
+                    "Risk Score",
+                    (
+                        f"{report.risk_score:.2f}"
+                        if report.risk_score is not None
+                        else "N/A"
+                    ),
+                )
 
                 st.subheader("Detailed Vulnerabilities")
                 for vuln in report.vulnerabilities:
-                    with st.expander(f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"):
+                    with st.expander(
+                        f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"
+                    ):
                         st.write(f"**Description:** {vuln.description}")
                         st.write(f"**Impact:** {vuln.impact}")
                         st.write(f"**Remediation:** {vuln.remediation}")
-                        st.write(f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)")
+                        st.write(
+                            f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)"
+                        )
                         st.write(f"**OWASP Category:** {vuln.owasp_category}")
                         st.write(f"**CVSS Score:** {vuln.cvss_score}")
                         if vuln.references:
@@ -142,20 +193,28 @@ if analyze_button:
                                 st.write(f"- [{ref}]({ref})")
                         if vuln.proof_of_concept:
                             with st.expander("Proof of Concept"):
-                                st.code(vuln.proof_of_concept, language="python")  # Adjust language as needed
+                                st.code(
+                                    vuln.proof_of_concept, language="python"
+                                )  # Adjust language as needed
                         if vuln.secure_code_example:
                             with st.expander("Secure Code Example"):
-                                st.code(vuln.secure_code_example, language="python") # Adjust language as needed
+                                st.code(
+                                    vuln.secure_code_example, language="python"
+                                )  # Adjust language as needed
 
                 st.subheader("Chained Vulnerabilities")
                 for chain in report.chained_vulnerabilities:
-                    with st.expander(f"Chain - Combined Severity: {chain.combined_severity}"):
+                    with st.expander(
+                        f"Chain - Combined Severity: {chain.combined_severity}"
+                    ):
                         st.write(f"**Attack Path:** {chain.attack_path}")
                         st.write(f"**Likelihood:** {chain.likelihood}")
                         st.write("**Prerequisites:**")
                         for prereq in chain.prerequisites:
                             st.write(f"- {prereq}")
-                        st.write(f"**Mitigation Priority:** {chain.mitigation_priority}")
+                        st.write(
+                            f"**Mitigation Priority:** {chain.mitigation_priority}"
+                        )
                 st.write("---")
 
                 # Generate and offer LaTeX report download
@@ -166,7 +225,7 @@ if analyze_button:
                     label="Download LaTeX Report",
                     data=latex_report_str,
                     file_name="vulnerability_report.tex",
-                    mime="application/x-tex"
+                    mime="application/x-tex",
                 )
 
                 # To also generate and download a PDF (requires pdflatex)
@@ -181,7 +240,7 @@ if analyze_button:
                         ["pdflatex", "-interaction=nonstopmode", "temp_report.tex"],
                         capture_output=True,
                         text=True,
-                        check=True
+                        check=True,
                     )
                     # Check for errors
                     if result.returncode != 0:
@@ -193,10 +252,12 @@ if analyze_button:
                                 label="Download PDF Report",
                                 data=pdf_data,
                                 file_name="vulnerability_report.pdf",
-                                mime="application/pdf"
+                                mime="application/pdf",
                             )
                 except FileNotFoundError:
-                    st.error("pdflatex not found.  Install a LaTeX distribution (e.g., TeX Live, MiKTeX).")
+                    st.error(
+                        "pdflatex not found.  Install a LaTeX distribution (e.g., TeX Live, MiKTeX)."
+                    )
                 except subprocess.CalledProcessError as e:
                     st.error(f"pdflatex failed: {e}")
                 finally:
@@ -209,7 +270,9 @@ if analyze_button:
 
     elif input_type == "Provide Repository URL" and repo_url:
         if not is_valid_repo_url(repo_url):
-            st.error("Invalid repository URL. Please enter a valid URL starting with http:// or https://.")
+            st.error(
+                "Invalid repository URL. Please enter a valid URL starting with http:// or https://."
+            )
         else:
             with st.spinner("Analyzing repository..."):
                 report = asyncio.run(analyze_repo(repo_url, branch, scan_depth))
@@ -218,22 +281,33 @@ if analyze_button:
                     st.subheader("Summary")
                     if report.summary:
                         col1, col2, col3, col4, col5, col6 = st.columns(6)
-                        col1.metric("Total", report.summary['total'])
-                        col2.metric("Critical", report.summary['critical'])
-                        col3.metric("High", report.summary['high'])
-                        col4.metric("Medium", report.summary['medium'])
-                        col5.metric("Low", report.summary['low'])
-                        col6.metric("Info", report.summary['info'])
+                        col1.metric("Total", report.summary["total"])
+                        col2.metric("Critical", report.summary["critical"])
+                        col3.metric("High", report.summary["high"])
+                        col4.metric("Medium", report.summary["medium"])
+                        col5.metric("Low", report.summary["low"])
+                        col6.metric("Info", report.summary["info"])
 
-                    st.metric("Risk Score", f"{report.risk_score:.2f}" if report.risk_score is not None else "N/A")
+                    st.metric(
+                        "Risk Score",
+                        (
+                            f"{report.risk_score:.2f}"
+                            if report.risk_score is not None
+                            else "N/A"
+                        ),
+                    )
 
                     st.subheader("Detailed Vulnerabilities")
                     for vuln in report.vulnerabilities:
-                        with st.expander(f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"):
+                        with st.expander(
+                            f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"
+                        ):
                             st.write(f"**Description:** {vuln.description}")
                             st.write(f"**Impact:** {vuln.impact}")
                             st.write(f"**Remediation:** {vuln.remediation}")
-                            st.write(f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)")
+                            st.write(
+                                f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)"
+                            )
                             st.write(f"**OWASP Category:** {vuln.owasp_category}")
                             st.write(f"**CVSS Score:** {vuln.cvss_score}")
                             if vuln.references:
@@ -249,13 +323,17 @@ if analyze_button:
 
                     st.subheader("Chained Vulnerabilities")
                     for chain in report.chained_vulnerabilities:
-                        with st.expander(f"Chain - Combined Severity: {chain.combined_severity}"):
+                        with st.expander(
+                            f"Chain - Combined Severity: {chain.combined_severity}"
+                        ):
                             st.write(f"**Attack Path:** {chain.attack_path}")
                             st.write(f"**Likelihood:** {chain.likelihood}")
                             st.write("**Prerequisites:**")
                             for prereq in chain.prerequisites:
                                 st.write(f"- {prereq}")
-                            st.write(f"**Mitigation Priority:** {chain.mitigation_priority}")
+                            st.write(
+                                f"**Mitigation Priority:** {chain.mitigation_priority}"
+                            )
 
                     latex_gen = LatexGenerator()
                     latex_report_str = latex_gen.generate_report(report)
@@ -264,7 +342,7 @@ if analyze_button:
                         label="Download LaTeX Report",
                         data=latex_report_str,
                         file_name="vulnerability_report.tex",
-                        mime="application/x-tex"
+                        mime="application/x-tex",
                     )
 
                     # PDF generation (same as above)
@@ -275,7 +353,7 @@ if analyze_button:
                             ["pdflatex", "-interaction=nonstopmode", "temp_report.tex"],
                             capture_output=True,
                             text=True,
-                            check=True
+                            check=True,
                         )
 
                         if result.returncode != 0:
@@ -287,7 +365,7 @@ if analyze_button:
                                     label="Download PDF Report",
                                     data=pdf_data,
                                     file_name="vulnerability_report.pdf",
-                                    mime="application/pdf"
+                                    mime="application/pdf",
                                 )
                     except FileNotFoundError:
                         st.error("pdflatex not found. Install a LaTeX distribution.")
