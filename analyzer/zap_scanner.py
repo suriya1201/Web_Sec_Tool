@@ -24,19 +24,11 @@ def scan_url(target, scope):
         )  # Only scan the given URL, no recursion or crawling other pages
         time.sleep(5)  # Reduce wait time to give the spider time to start
 
-        while int(zap.spider.status()) < 100:
-            st.write(f"Spider scan in progress: {zap.spider.status()}%")
-            time.sleep(2)  # Shortened sleep time for faster checks
-
     # Entire Website: Crawl the whole website, follow all links and pages
     elif scope == "Entire Website":
         # Limit the depth to 2 (instead of crawling all linked pages) or a smaller number
         zap.spider.scan(url=target, maxchildren=2)  # Limit depth of the crawl
         time.sleep(5)  # Wait for the spider to start
-
-        while int(zap.spider.status()) < 100:
-            st.write(f"Spider scan in progress: {zap.spider.status()}%")
-            time.sleep(2)  # Reduced wait time to speed up checks
 
     st.write("Spider scan completed. Starting Active scan.")
 
@@ -45,7 +37,7 @@ def scan_url(target, scope):
 
     while int(zap.ascan.status()) < 100:
         st.write(f"Active scan in progress: {zap.ascan.status()}%")
-        time.sleep(5)  # Reduce wait time for quicker status checks
+        time.sleep(10)
 
     st.write("Active scan completed. Fetching alerts...")
     alerts = zap.core.alerts(baseurl=target)
