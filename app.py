@@ -102,30 +102,38 @@ if scan_button:
 
 # --- Analysis Logic (using httpx for requests to FastAPI) ---
 async def analyze_code_file(files):
-    async with httpx.AsyncClient() as client:
+    print("--- Starting analyze_code_file (Streamlit) ---")  # Start of function
+    async with httpx.AsyncClient(follow_redirects=False) as client:
         files_data = []
         for file in files:
-            files_data.append(("files", (file.name, file.getvalue(), file.type)))
+            print(f"  Processing file: {file.name}")  # File being processed
+            files_data.append(('files', (file.name, file.getvalue(), file.type)))
+        print(f"  Files data prepared: {files_data}") # Show the prepared data
 
         try:
-            response = await client.post(
-                "http://localhost:8000/analyze/file", files=files_data
-            )
-            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
-            return VulnerabilityReport(**response.json())
+            print("  Sending POST request to FastAPI...")  # Before sending request
+            response = await client.post("http://localhost:8001/analyze/file", files=files_data)
+            print(f"  Received response from FastAPI. Status code: {response.status_code}")  # Status code
+            response.raise_for_status()  # This will raise an exception for 4xx/5xx errors
+            print("  Response successful (status code 2xx).")
+            report = VulnerabilityReport(**response.json())
+            print("  Response parsed successfully into VulnerabilityReport.") # Successful parsing
+            return report
         except httpx.RequestError as e:
-            st.error(f"Network error: {e}")
+            print(f"  Network error: {e}")  # Network-level errors
             return None
         except httpx.HTTPStatusError as e:
-            st.error(f"Server error: {e.response.status_code} - {e.response.text}")
+            print(f"  Server error: {e.response.status_code} - {e.response.text}")  # HTTP errors
             return None
         except Exception as e:
-            st.error(f"Unexpected error: {e}")
+            print(f"  Unexpected error: {e}")  # Other exceptions
             return None
+        finally:
+          print("--- Finishing analyze_code_file (Streamlit) ---") # End of function
 
 
 async def analyze_repo(repo_url, branch, scan_depth):
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=False) as client:
         try:
             response = await client.post(
                 "http://localhost:8000/analyze/repository",
@@ -344,7 +352,6 @@ if analyze_button:
                         file_name="vulnerability_report.tex",
                         mime="application/x-tex",
                     )
-
                     # PDF generation (same as above)
                     with open("temp_report.tex", "w") as f:
                         f.write(latex_report_str)

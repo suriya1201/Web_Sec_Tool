@@ -9,7 +9,7 @@ from models.vulnerability import VulnerabilityReport
 from utils.file_handler import process_uploaded_file
 
 app = FastAPI(
-    title="Secure Code Review AI Agent (SeCoRA) - AI SAST Backend",
+    title="Inspectify AI Agent",
     description="API for AI-powered security vulnerability detection and remediation",
     version="0.1.0"
 )
@@ -35,11 +35,15 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityRepo
     """
     Analyze a single file for security vulnerabilities.
     """
+    print("--- Starting analyze_file (FastAPI) ---")  # Start of function
     try:
         reports = []
         for file in files:
+            print(f"  Processing file: {file.filename}")  # File being processed
             file_content = await process_uploaded_file(file)
+            print(f"    File content read.  Size: {len(file_content)} bytes")  # Content size
             report = await analyzer.analyze_code(file_content, file.filename)
+            print(f"    Analysis complete for {file.filename}.")  # Analysis status
             reports.append(report)
         #Aggregate the reports
         if len(reports) > 1:
@@ -51,13 +55,20 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityRepo
             )
             combined_report.calculate_summary()
             combined_report.calculate_risk_score()
+            print("    Combined report created.") # Report combination status
             return combined_report
         elif reports:
+            print(reports[0])
+            print("    Returning single report.") # Single report status
             return reports[0]  # Return single report if only one file
         else:
-             return VulnerabilityReport(timestamp=datetime.now(), vulnerabilities=[], chained_vulnerabilities=[])
+            print("    No files to analyze, returning empty report")
+            return VulnerabilityReport(timestamp=datetime.now(), vulnerabilities=[], chained_vulnerabilities=[])
     except Exception as e:
+        print(f"    Error during analysis: {e}")  # Error handling
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+      print("--- Finishing analyze_file (FastAPI) ---") # End of function
 
 
 @app.post("/analyze/repository", response_model=VulnerabilityReport)
