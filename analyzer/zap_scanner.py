@@ -9,38 +9,56 @@ load_dotenv()
 
 def scan_url(target, scope):
     # Initialize ZAP API
+    api_key = os.getenv("ZAP_API_KEY")
+    if not api_key:
+        st.error("ZAP_API_KEY not found in environment variables.")
+        return
+
     zap = ZAPv2(
         proxies={"http": "http://localhost:8081", "https": "http://localhost:8081"},
         apikey=os.getenv("ZAP_API_KEY"),
     )
 
-    # Show starting scan message in the main content (not in sidebar)
-    st.write(f"Starting Spider scan on: {target}")
-
     # Page Only: Limit Spider to only the given page (no children)
     if scope == "Page Only":
-        zap.spider.scan(
-            url=target, maxchildren=0
-        )  # Only scan the given URL, no recursion or crawling other pages
-        time.sleep(5)  # Reduce wait time to give the spider time to start
+        try:
+            st.write(f"Starting Spider scan on: {target} (Page Only)")
+            zap.spider.scan(url=target, maxchildren=0)
+            time.sleep(5)  # Reduce wait time to give the spider time to start
+        except Exception as e:
+            st.error(f"Error starting Spider scan: {e}")
+            return  # Stop if Spider scan fails
 
     # Entire Website: Crawl the whole website, follow all links and pages
     elif scope == "Entire Website":
-        # Limit the depth to 2 (instead of crawling all linked pages) or a smaller number
-        zap.spider.scan(url=target, maxchildren=2)  # Limit depth of the crawl
-        time.sleep(5)  # Wait for the spider to start
+        try:
+            st.write(f"Starting Spider scan on: {target} (Entire Website)")
+            zap.spider.scan(url=target, maxchildren=2)
+            time.sleep(5)  # Reduce wait time to give the spider time to start
+        except Exception as e:
+            st.error(f"Error starting Spider scan: {e}")
+            return  # Stop if Spider scan fails
 
     st.write("Spider scan completed. Starting Active scan.")
 
-    # Active scan: Run without custom rules to optimize scan time
-    zap.ascan.scan(url=target)
+    try:
+        zap.ascan.scan(url=target)
+    except Exception as e:
+        st.error(f"Error starting Active scan: {e}")
+        return  # Stop if Active scan fails
 
+    progress = st.progress(0)
     while int(zap.ascan.status()) < 100:
-        st.write(f"Active scan in progress: {zap.ascan.status()}%")
-        time.sleep(10)
-
+        progress.progress(int(zap.ascan.status()))
+        time.sleep(5)
+    progress.progress(100)
     st.write("Active scan completed. Fetching alerts...")
-    alerts = zap.core.alerts(baseurl=target)
+
+    try:
+        alerts = zap.core.alerts(baseurl=target)
+    except Exception as e:
+        st.error(f"Error fetching alerts: {e}")
+        return  # Stop if alerts can't be fetched
 
     with open("zap_scan_results.txt", "w") as file:
         for alert in alerts:

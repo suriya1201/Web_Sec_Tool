@@ -7,6 +7,13 @@ import subprocess
 import os
 from datetime import datetime
 from analyzer.zap_scanner import scan_url
+from zapv2 import ZAPv2
+
+
+zap = ZAPv2(
+    proxies={"http": "http://localhost:8081", "https": "http://localhost:8081"},
+    apikey=os.getenv("ZAP_API_KEY"),
+)
 
 
 # --- Helper Functions ---
@@ -85,13 +92,6 @@ if scan_button:
         if is_valid_scan_url(target_url):
             st.write(f"Scanning URL: {target_url} with option: {scan_options}")
             scan_url(target_url, scan_options)
-            with st.spinner("Spider scan in progress..."):
-                # The following should be wrapped in a loop to show progress, assuming `zap.spider.status()` updates during the scan
-                progress = zap.spider.status()  # Example: fetching the progress
-                while progress != 100:  # Check the progress until it reaches 100%
-                    st.write(f"Spider scan in progress: {progress}%")
-                    progress = zap.spider.status()  # Update progress
-                st.success("Scan completed!")
         else:
             st.error(
                 "Invalid URL. Please enter a valid URL starting with http:// or https://."
