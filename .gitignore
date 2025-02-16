@@ -169,3 +169,5 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+.vscode/tasks.json
+zap_scan_results.txt
