@@ -1,6 +1,0 @@
-[Medium] Missing Anti-clickjacking Header - http://testphp.vulnweb.com/login.php
-[Informational] Charset Mismatch (Header Versus Meta Content-Type Charset) - http://testphp.vulnweb.com/login.php
-[Medium] Content Security Policy (CSP) Header Not Set - http://testphp.vulnweb.com/login.php
-[Low] Server Leaks Version Information via "Server" HTTP Response Header Field - http://testphp.vulnweb.com/login.php
-[Low] X-Content-Type-Options Header Missing - http://testphp.vulnweb.com/login.php
-[Low] Server Leaks Information via "X-Powered-By" HTTP Response Header Field(s) - http://testphp.vulnweb.com/login.php

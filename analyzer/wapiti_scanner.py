@@ -65,21 +65,34 @@ def run_wapiti(target_url, scan_scope):
         
         # Display the filtered vulnerabilities section in a nicer format
         st.write("Vulnerabilities found:")
-        for vuln_type, vuln_list in filtered_vulnerabilities.items():
-            st.subheader(vuln_type)
-            for vuln in vuln_list:
-                st.markdown(f"**Path:** {vuln.get('path', 'N/A')}")
-                st.markdown(f"**Method:** {vuln.get('method', 'N/A')}")
-                st.markdown(f"**Info:** {vuln.get('info', 'N/A')}")
-                st.markdown(f"**Level:** {vuln.get('level', 'N/A')}")
-                st.markdown(f"**Parameter:** {vuln.get('parameter', 'N/A')}")
-                st.markdown(f"**Referer:** {vuln.get('referer', 'N/A')}")
-                st.markdown(f"**Module:** {vuln.get('module', 'N/A')}")
-                st.markdown(f"**HTTP Request:**")
-                st.code(vuln.get('http_request', 'N/A'))
-                st.markdown(f"**CURL Command:**")
-                st.code(vuln.get('curl_command', 'N/A'))
-                st.markdown("---")
+        with open("consolidated_scan_results.md", "a") as output_file:
+            output_file.write("# Wapiti Scan Results\n")
+            for vuln_type, vuln_list in filtered_vulnerabilities.items():
+                st.subheader(vuln_type)
+                output_file.write(f"## {vuln_type}\n")
+                for vuln in vuln_list:
+                    st.markdown(f"**Path:** {vuln.get('path', 'N/A')}")
+                    output_file.write(f"**Path:** {vuln.get('path', 'N/A')}\n")
+                    st.markdown(f"**Method:** {vuln.get('method', 'N/A')}")
+                    output_file.write(f"**Method:** {vuln.get('method', 'N/A')}\n")
+                    st.markdown(f"**Info:** {vuln.get('info', 'N/A')}")
+                    output_file.write(f"**Info:** {vuln.get('info', 'N/A')}\n")
+                    st.markdown(f"**Level:** {vuln.get('level', 'N/A')}")
+                    output_file.write(f"**Level:** {vuln.get('level', 'N/A')}\n")
+                    st.markdown(f"**Parameter:** {vuln.get('parameter', 'N/A')}")
+                    output_file.write(f"**Parameter:** {vuln.get('parameter', 'N/A')}\n")
+                    st.markdown(f"**Referer:** {vuln.get('referer', 'N/A')}")
+                    output_file.write(f"**Referer:** {vuln.get('referer', 'N/A')}\n")
+                    st.markdown(f"**Module:** {vuln.get('module', 'N/A')}")
+                    output_file.write(f"**Module:** {vuln.get('module', 'N/A')}\n")
+                    st.markdown(f"**HTTP Request:**")
+                    st.code(vuln.get('http_request', 'N/A'))
+                    output_file.write(f"**HTTP Request:**\n```\n{vuln.get('http_request', 'N/A')}\n```\n")
+                    st.markdown(f"**CURL Command:**")
+                    st.code(vuln.get('curl_command', 'N/A'))
+                    output_file.write(f"**CURL Command:**\n```\n{vuln.get('curl_command', 'N/A')}\n```\n")
+                    st.markdown("---")
+                    output_file.write("---\n")
         
         return filtered_vulnerabilities
     except subprocess.CalledProcessError as e:

@@ -120,10 +120,19 @@ if scan_button:
             st.markdown("---")
             st.header("Wapiti Scan:")
             run_wapiti(target_url, scan_options)  # Run Wapiti after ZAP with scan options
-        else:
-            st.error(
-                "Invalid URL. Please enter a valid URL starting with http:// or https://."
+
+            # Change the scan button to a download button
+            with open("consolidated_scan_results.md", "r") as file:
+                consolidated_results = file.read()
+
+            st.download_button(
+                label="Download Consolidated Scan Results",
+                data=consolidated_results,
+                file_name="consolidated_scan_results.md",
+                mime="text/markdown",
             )
+        else:
+            st.error("Invalid URL. Please enter a valid URL starting with http:// or https://.")
     else:
         st.error("Please enter a URL to scan.")
 
