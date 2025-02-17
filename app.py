@@ -95,7 +95,7 @@ if scan_button:
             st.write(f"Scanning URL: {target_url} with option: {scan_options}")
             scan_url(target_url, scan_options)
             st.header("Wapiti Scan:")
-            run_wapiti(target_url)  # Run Wapiti after ZAP
+            run_wapiti(target_url, scan_options)  # Run Wapiti after ZAP with scan options
         else:
             st.error(
                 "Invalid URL. Please enter a valid URL starting with http:// or https://."

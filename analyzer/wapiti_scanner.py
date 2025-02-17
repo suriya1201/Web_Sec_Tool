@@ -2,9 +2,8 @@ import subprocess
 import os
 import json
 import streamlit as st
-import time
 
-def run_wapiti(target_url):
+def run_wapiti(target_url, scan_scope):
     try:
         st.write(f"Starting Wapiti scan on: {target_url}")
         # Set the PYTHONIOENCODING environment variable to utf-8
@@ -19,12 +18,18 @@ def run_wapiti(target_url):
                 "takeover", "upload"  # BAC-related modules
             ]
         
+        # Determine the scope of the scan
+        if scan_scope == "Entire Website":
+            scope_option = "--scope=folder"
+        else:
+            scope_option = "--scope=url"
+        
         # Initialize the progress bar
         progress_bar = st.progress(0)
         
         # Run the Wapiti scan
         result = subprocess.run(
-            ["wapiti", "-u", target_url, "-f", "json", "-o", "wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1"],
+            ["wapiti", "-u", target_url, "-f", "json", "-o", "wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1", scope_option],
             capture_output=True,
             text=True,
             check=True,
