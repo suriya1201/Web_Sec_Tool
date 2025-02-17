@@ -29,11 +29,13 @@ def is_valid_scan_url(url: str) -> bool:
 
 
 # --- UI Setup ---
-st.set_page_config(page_title="SeCoRA - AI SAST", layout="wide")
-st.title("Secure Code Review AI Agent (SeCoRA)")
-st.write("AI-powered security vulnerability detection and remediation.")
+st.set_page_config(page_title="INSPECTIFY", layout="wide")
+st.title("INSPECTIFY")
+st.write("Tool for analyzing code and scanning web applications for vulnerabilities.")
 
 with st.sidebar:
+    st.markdown("<h1 style='font-size: 3em;'>INSPECTIFY</h1>", unsafe_allow_html=True)
+    
     st.header("Select task")
     tabs = st.tabs(["Code Analysis", "Vulnerability Scanning"])
 
