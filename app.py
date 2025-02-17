@@ -7,6 +7,7 @@ import subprocess
 import os
 from datetime import datetime
 from analyzer.zap_scanner import scan_url
+from analyzer.wapiti_scanner import run_wapiti  # Import the Wapiti scanner
 from zapv2 import ZAPv2
 
 
@@ -90,8 +91,11 @@ with st.sidebar:
 if scan_button:
     if target_url:
         if is_valid_scan_url(target_url):
+            st.header("OWASP ZAP Scan:")
             st.write(f"Scanning URL: {target_url} with option: {scan_options}")
             scan_url(target_url, scan_options)
+            st.header("Wapiti Scan:")
+            run_wapiti(target_url)  # Run Wapiti after ZAP
         else:
             st.error(
                 "Invalid URL. Please enter a valid URL starting with http:// or https://."
