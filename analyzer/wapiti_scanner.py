@@ -20,9 +20,9 @@ def run_wapiti(target_url, scan_scope):
         
         # Determine the scope of the scan
         if scan_scope == "Entire Website":
-            scope_option = "--scope=folder"
+            scope_option = "--scope=domain"
         else:
-            scope_option = "--scope=url"
+            scope_option = "--scope=page"
         
         # Initialize the progress bar
         progress_bar = st.progress(0)

@@ -94,6 +94,7 @@ if scan_button:
             st.header("OWASP ZAP Scan:")
             st.write(f"Scanning URL: {target_url} with option: {scan_options}")
             scan_url(target_url, scan_options)
+            st.markdown("---")
             st.header("Wapiti Scan:")
             run_wapiti(target_url, scan_options)  # Run Wapiti after ZAP with scan options
         else:
