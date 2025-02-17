@@ -46,10 +46,6 @@ def configure_active_scanners(zap):
             scanner_id, "HIGH"
         )  # Set strength for more aggressive checks
 
-    st.write(
-        "Configured ZAP to scan only for Injection and Broken Access Control issues."
-    )
-
 
 def disable_passive_scanners(zap):
     zap.pscan.disable_all_scanners()  # Disable all passive scanners
