@@ -2,6 +2,7 @@ import subprocess
 import os
 import json
 import streamlit as st
+import time
 
 def run_wapiti(target_url, scan_scope):
     try:
@@ -26,15 +27,26 @@ def run_wapiti(target_url, scan_scope):
         
         # Initialize the progress bar
         progress_bar = st.progress(0)
+        progress = 0
         
-        # Run the Wapiti scan
-        result = subprocess.run(
+        # Run the Wapiti scan in a subprocess
+        process = subprocess.Popen(
             ["wapiti", "-u", target_url, "-f", "json", "-o", "wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1", scope_option],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            check=True,
             env=env  # Pass the modified environment
         )
+        
+        # Monitor the progress of the scan
+        while process.poll() is None:
+            time.sleep(1)  # Wait for a second before checking the progress again
+            # Update the progress bar (this is a simple example, you can implement a more accurate progress calculation)
+            progress = min(progress + 5, 100)
+            progress_bar.progress(progress)
+        
+        # Wait for the process to complete
+        stdout, stderr = process.communicate()
         
         # Update the progress bar to 100% after the scan is complete
         progress_bar.progress(100)

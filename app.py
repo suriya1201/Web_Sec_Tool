@@ -78,6 +78,7 @@ with st.sidebar:
 
         analyze_button = st.button("Analyze")
 
+
     with tabs[1]:
         st.write("Vulnerability Scanning ( Injection and Broken Access Control )")
 
@@ -87,8 +88,28 @@ with st.sidebar:
         # Add options to scan other directories/pages
         scan_options = st.radio("Scan Options", ["Page Only", "Entire Website"])
 
-        # Add a button to start the scan
-        scan_button = st.button("Start Scan")
+        # Initialize session state for advanced options visibility
+        if "show_advanced_options" not in st.session_state:
+            st.session_state.show_advanced_options = False
+
+        # Toggle advanced options visibility
+        # if st.button("Advanced Options"):
+        #     st.session_state.show_advanced_options = not st.session_state.show_advanced_options
+
+        # Add an expander for advanced options
+        # if st.session_state.show_advanced_options:
+        #     with st.expander("Advanced Options"):
+        #         st.write("Here you can configure advanced scan options.")
+        #         # Add your advanced options here
+        #         st.checkbox("Option 1")
+        #         st.checkbox("Option 2")
+        #         st.checkbox("Option 3")
+
+        # Center the "Start Scan" button and make it fill the space
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            scan_button = st.button("Start Scan", use_container_width=True)
+
 
 if scan_button:
     if target_url:
