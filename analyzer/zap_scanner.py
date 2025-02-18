@@ -28,9 +28,8 @@ def disable_passive_scanners(zap):
     zap.pscan.disable_all_scanners()  # Disable all passive scanners
     # Clear all existing alerts
     zap.core.delete_all_alerts()
-
 def append_zap_results_to_consolidated_file(alerts):
-    with open("consolidated_scan_results.md", "a") as file:
+    with open("consolidated_scan_results.md", "a", encoding="utf-8") as file:
         file.write("# ZAP Scan Results\n")
         for alert in alerts:
             alert_message = f"**Risk:** {alert['risk']}\n**Name:** {alert['name']}\n**URL:** {alert['url']}\n**Description:** {alert['description']}\n**Solution:** {alert['solution']}\n**Reference:** {alert['reference']}\n---\n"
@@ -95,7 +94,7 @@ def scan_url(target, scope):
         st.error(f"Error fetching alerts: {e}")
         return  # Stop if alerts can't be fetched
 
-    with open("zap_scan_results.txt", "w") as file:
+    with open("zap_scan_results.txt", "w", encoding="utf-8") as file:
         for alert in alerts:
             alert_message = f"[{alert['risk']}] {alert['name']} - {alert['url']}\n"
             st.write(alert_message)
