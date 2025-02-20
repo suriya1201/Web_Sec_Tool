@@ -3,20 +3,26 @@ import json
 import os
 import streamlit as st
 
-def run_sqlmap(target_url, output_file="scans/sqlmap_report.json"):
-    """Runs sqlmap on the target URL and saves the output to a JSON file."""
-    st.write(f"Running sqlmap on {target_url}...")
+def run_sqlmap(target_url, zap_proxy="http://localhost:8081"):
+    """Runs sqlmap on the target URL using ZAP Proxy and saves the output to the specified directory."""
+    st.write(f"Running sqlmap on {target_url} using ZAP Proxy at {zap_proxy}...")
 
     command = [
         "sqlmap", "-u", target_url, "--batch",
-        "--dbs", "--json-output", output_file
+        "--dbs", "--proxy", zap_proxy
     ]
 
     try:
         subprocess.run(command, check=True)
-        st.write(f"sqlmap scan completed. Results saved in {output_file}")
+        st.write(f"sqlmap scan completed. Results saved in {output_dir}")
     except subprocess.CalledProcessError as e:
         st.write(f"Error running sqlmap: {e}")
+
+# Example usage
+if __name__ == "__main__":
+    target_url = "http://localhost/bWAPP/sqli_1.php?title=asas&action=search"
+    run_sqlmap(target_url)
+
 
 # def run_nosqli(target_url):
 #     """Runs NoSQLi to test for NoSQL Injection vulnerabilities."""
@@ -82,14 +88,3 @@ def run_sqlmap(target_url, output_file="scans/sqlmap_report.json"):
 #             st.write("LDAP authentication failed (likely secure).")
 #     except Exception as e:
 #         st.write(f"Error testing LDAP Injection: {e}")
-
-# def unified_scan(target_url):
-#     """Runs all injection tests."""
-#     run_sqlmap(target_url)
-#     run_nosqli(target_url)
-#     run_commix(target_url)
-#     run_tplmap(target_url)
-#     run_defusedxml()
-#     run_ldap3(target_url)
-    
-#     st.write("\n🔹 Scan Complete! Check the individual tool outputs for detailed results.")
