@@ -8,25 +8,22 @@ import os
 from datetime import datetime
 from analyzer.zap_scanner import scan_url
 from analyzer.wapiti_scanner import run_wapiti  # Import the Wapiti scanner
-from zapv2 import ZAPv2
 
+from zapv2 import ZAPv2
 
 zap = ZAPv2(
     proxies={"http": "http://localhost:8081", "https": "http://localhost:8081"},
     apikey=os.getenv("ZAP_API_KEY"),
 )
 
-
 # --- Helper Functions ---
 def is_valid_repo_url(url: str) -> bool:
     """Basic URL validation (you might want a more robust check)."""
     return url.startswith("http://") or url.startswith("https://")
 
-
 def is_valid_scan_url(url: str) -> bool:
     """Basic URL validation for scanning (you might want a more robust check)."""
     return url.startswith("http://") or url.startswith("https://")
-
 
 # --- UI Setup ---
 st.set_page_config(page_title="INSPECTIFY", layout="wide")
@@ -78,7 +75,6 @@ with st.sidebar:
 
         analyze_button = st.button("Analyze")
 
-
     with tabs[1]:
         st.write("Vulnerability Scanning ( Injection and Broken Access Control )")
 
@@ -88,9 +84,9 @@ with st.sidebar:
         # Add options to scan other directories/pages
         scan_options = st.radio("Scan Options", ["Page Only", "Entire Website"])
 
-        # Initialize session state for advanced options visibility
-        if "show_advanced_options" not in st.session_state:
-            st.session_state.show_advanced_options = False
+        # # Initialize session state for advanced options visibility
+        # if "show_advanced_options" not in st.session_state:
+        #     st.session_state.show_advanced_options = False
 
         # Toggle advanced options visibility
         # if st.button("Advanced Options"):
@@ -110,7 +106,6 @@ with st.sidebar:
         with col2:
             scan_button = st.button("Start Scan", use_container_width=True)
 
-
 if scan_button:
     if target_url:
         if is_valid_scan_url(target_url):
@@ -120,9 +115,11 @@ if scan_button:
             st.markdown("---")
             st.header("Wapiti Scan:")
             run_wapiti(target_url, scan_options)  # Run Wapiti after ZAP with scan options
+            st.markdown("---")
+
 
             # Change the scan button to a download button
-            with open("consolidated_scan_results.md", "r") as file:
+            with open("scans/consolidated_scan_results.md", "r") as file:
                 consolidated_results = file.read()
 
             st.download_button(
@@ -135,7 +132,6 @@ if scan_button:
             st.error("Invalid URL. Please enter a valid URL starting with http:// or https://.")
     else:
         st.error("Please enter a URL to scan.")
-
 
 # --- Analysis Logic (using httpx for requests to FastAPI) ---
 async def analyze_code_file(files):
@@ -168,7 +164,6 @@ async def analyze_code_file(files):
         finally:
           print("--- Finishing analyze_code_file (Streamlit) ---") # End of function
 
-
 async def analyze_repo(repo_url, branch, scan_depth):
     async with httpx.AsyncClient(follow_redirects=False) as client:
         try:
@@ -191,7 +186,6 @@ async def analyze_repo(repo_url, branch, scan_depth):
         except Exception as e:
             st.error(f"Unexpected error: {e}")
             return None
-
 
 # --- Main Analysis Execution ---
 if analyze_button:

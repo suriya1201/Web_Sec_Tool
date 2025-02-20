@@ -31,7 +31,7 @@ def run_wapiti(target_url, scan_scope):
         
         # Run the Wapiti scan in a subprocess
         process = subprocess.Popen(
-            ["wapiti", "-u", target_url, "-f", "json", "-o", "wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1", scope_option],
+            ["wapiti", "-u", target_url, "-f", "json", "-o", "scans/wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1", scope_option],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -54,7 +54,7 @@ def run_wapiti(target_url, scan_scope):
         st.write("Wapiti scan completed.")
         
         # Read the JSON results
-        with open("wapiti_scan_results.json", "r") as file:
+        with open("scans/wapiti_scan_results.json", "r") as file:
             wapiti_results = json.load(file)
         
         # Extract the vulnerabilities section
@@ -65,7 +65,7 @@ def run_wapiti(target_url, scan_scope):
         
         # Display the filtered vulnerabilities section in a nicer format
         st.write("Vulnerabilities found:")
-        with open("consolidated_scan_results.md", "a") as output_file:
+        with open("scans/consolidated_scan_results.md", "a") as output_file:
             output_file.write("# Wapiti Scan Results\n")
             for vuln_type, vuln_list in filtered_vulnerabilities.items():
                 st.subheader(vuln_type)
