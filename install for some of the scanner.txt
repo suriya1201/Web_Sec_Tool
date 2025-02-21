@@ -1,0 +1,7 @@
+pip install defusedxml ldap3
+git clone https://github.com/commixproject/commix.git
+git clone https://github.com/epinna/tplmap.git
+sudo apt install sqlmap
+wget https://github.com/Charlie-belmer/nosqli/releases/download/v0.1.0/nosqli_linux_amd64
+chmod +x nosqli_linux_amd64
+mv nosqli_linux_amd64 nosqli
