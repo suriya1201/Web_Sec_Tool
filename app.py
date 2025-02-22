@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 from analyzer.zap_scanner import scan_url
 from analyzer.wapiti_scanner import run_wapiti  # Import the Wapiti scanner
+from analyzer.injection_scanners import run_sqlmap, run_commix, run_sstimap 
 
 from zapv2 import ZAPv2
 
@@ -116,7 +117,15 @@ if scan_button:
             st.header("Wapiti Scan:")
             run_wapiti(target_url, scan_options)  # Run Wapiti after ZAP with scan options
             st.markdown("---")
-
+            st.header("SQLMap Scan:")
+            run_sqlmap(target_url)  # Run SQLMap scan
+            st.markdown("---")
+            st.header("COMMIX Scan:")
+            run_commix(target_url)  # Run Commix scan
+            st.markdown("---")
+            st.header("SSTImap Scan:")
+            run_sstimap(target_url, scan_options)  # Run SSTImap scan
+            st.markdown("---")
 
             # Change the scan button to a download button
             with open("scans/consolidated_scan_results.md", "r") as file:
