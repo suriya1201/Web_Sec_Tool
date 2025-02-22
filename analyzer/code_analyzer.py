@@ -77,6 +77,8 @@ class CodeAnalyzer:
             VulnerabilityReport: The vulnerability report, empty for empty files
         """
 
+        # convert code content to string
+        code_content = str(code_content)
         # Check for empty file
         if not code_content or not isinstance(code_content, str) or code_content.isspace():
             logging.info(f"Skipping empty file: {filename}")
