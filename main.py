@@ -59,7 +59,6 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityRepo
             print("    Combined report created.")
             return combined_report
         elif reports:
-            print(reports[0])
             print("    Returning single report.")
             return reports[0]
         else:

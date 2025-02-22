@@ -1,10 +1,9 @@
 import streamlit as st
 import httpx
 import asyncio
-from models.vulnerability import VulnerabilityReport  # Ensure correct import
-from utils.latex_generator import LatexGenerator #Keep latex for now
-import os  # Keep os, in case you uncomment ZAP later
-
+from models.vulnerability import VulnerabilityReport
+from utils.latex_generator import LatexGenerator  # Keep for now
+import os
 
 # --- Helper Functions ---
 def is_valid_repo_url(url: str) -> bool:
@@ -122,14 +121,12 @@ with st.sidebar:
         scan_options = st.radio("Scan Options", ["Page Only", "Entire Website"])
         scan_button = st.button("Start Scan")  # Still here, but does nothing
 
-
 # --- Main Analysis Execution and Display ---
 if analyze_button:
     if input_type == "Upload Code File" and uploaded_files:
         with st.spinner("Analyzing code..."):
             report = asyncio.run(analyze_code_file(uploaded_files))
             if report:
-                print(report)
                 # --- Display Results Directly on the Page ---
                 st.header("Vulnerability Report")
                 st.subheader("Summary")
@@ -163,12 +160,15 @@ if analyze_button:
                             st.write("**References:**")
                             for ref in vuln.references:
                                 st.write(f"- [{ref}]({ref})")
+
                         if vuln.proof_of_concept:
-                            with st.expander("Proof of Concept"):
-                                st.code(vuln.proof_of_concept, language="python")
+                            st.write("**Proof of Concept:**")  # Just write the heading
+                            st.code(vuln.proof_of_concept, language="python")  # Display the code
+
                         if vuln.secure_code_example:
-                            with st.expander("Secure Code Example"):
-                                st.code(vuln.secure_code_example, language="python")
+                            st.write("**Secure Code Example:**")  # Just write the heading
+                            st.code(vuln.secure_code_example, language="python")  # Display the code
+
 
                 st.subheader("Chained Vulnerabilities")
                 for chain in report.chained_vulnerabilities:
@@ -221,11 +221,12 @@ if analyze_button:
                                 for ref in vuln.references:
                                     st.write(f"- [{ref}]({ref})")
                             if vuln.proof_of_concept:
-                                with st.expander("Proof of Concept"):
-                                    st.code(vuln.proof_of_concept, language="python")
+                                st.write("**Proof of Concept:**")  # Just write the heading
+                                st.code(vuln.proof_of_concept, language="python")  # Display the code
+
                             if vuln.secure_code_example:
-                                with st.expander("Secure Code Example"):
-                                    st.code(vuln.secure_code_example, language="python")
+                                st.write("**Secure Code Example:**")  # Just write the heading
+                                st.code(vuln.secure_code_example, language="python")  # Display the code
 
                     st.subheader("Chained Vulnerabilities")
                     for chain in report.chained_vulnerabilities:
