@@ -28,6 +28,7 @@ def disable_passive_scanners(zap):
     zap.pscan.disable_all_scanners()  # Disable all passive scanners
     # Clear all existing alerts
     zap.core.delete_all_alerts()
+
 def append_zap_results_to_consolidated_file(alerts):
     with open("scans/consolidated_scan_results.md", "a", encoding="utf-8") as file:
         file.write("# ZAP Scan Results\n")
@@ -35,7 +36,7 @@ def append_zap_results_to_consolidated_file(alerts):
             alert_message = f"**Risk:** {alert['risk']}\n**Name:** {alert['name']}\n**URL:** {alert['url']}\n**Description:** {alert['description']}\n**Solution:** {alert['solution']}\n**Reference:** {alert['reference']}\n---\n"
             file.write(alert_message)
 
-def scan_url(target, scope):
+def scan_url(target, scan_depth=1):
     # Initialize ZAP API
     api_key = os.getenv("ZAP_API_KEY")
     if not api_key:
@@ -50,25 +51,13 @@ def scan_url(target, scope):
     # disable_passive_scanners(zap)
     configure_active_scanners(zap)
 
-    # Page Only: Limit Spider to only the given page (no children)
-    if scope == "Page Only":
-        try:
-            st.write(f"Starting Spider scan on: {target} (Page Only)")
-            zap.spider.scan(url=target, maxchildren=0)
-            time.sleep(5)  # Reduce wait time to give the spider time to start
-        except Exception as e:
-            st.error(f"Error starting Spider scan: {e}")
-            return  # Stop if Spider scan fails
-
-    # Entire Website: Crawl the whole website, follow all links and pages
-    elif scope == "Entire Website":
-        try:
-            st.write(f"Starting Spider scan on: {target} (Entire Website)")
-            zap.spider.scan(url=target, maxchildren=2)
-            time.sleep(5)  # Reduce wait time to give the spider time to start
-        except Exception as e:
-            st.error(f"Error starting Spider scan: {e}")
-            return  # Stop if Spider scan fails
+    try:
+        st.write(f"Starting Spider scan on: {target} with depth: {scan_depth}")
+        zap.spider.scan(url=target, maxchildren=scan_depth)
+        time.sleep(5)  # Reduce wait time to give the spider time to start
+    except Exception as e:
+        st.error(f"Error starting Spider scan: {e}")
+        return  # Stop if Spider scan fails
 
     # Wait for Spider scan to complete
     while int(zap.spider.status()) < 100:

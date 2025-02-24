@@ -65,24 +65,7 @@ with st.sidebar:
     with tabs[1]:
         st.write("Vulnerability Scanning (Injection and Broken Access Control)")
         target_url = st.text_input("Enter URL to scan")
-        scan_options = st.radio("Scan Options", ["Page Only", "Entire Website"])
-
-        # # Initialize session state for advanced options visibility
-        # if "show_advanced_options" not in st.session_state:
-        #     st.session_state.show_advanced_options = False
-
-        # Toggle advanced options visibility
-        # if st.button("Advanced Options"):
-        #     st.session_state.show_advanced_options = not st.session_state.show_advanced_options
-
-        # Add an expander for advanced options
-        # if st.session_state.show_advanced_options:
-        #     with st.expander("Advanced Options"):
-        #         st.write("Here you can configure advanced scan options.")
-        #         # Add your advanced options here
-        #         st.checkbox("Option 1")
-        #         st.checkbox("Option 2")
-        #         st.checkbox("Option 3")
+        scan_depth = st.number_input("Scan Depth", min_value=1, max_value=10, value=1)  # Change to number input for depth
 
         # Center the "Start Scan" button and make it fill the space
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -93,23 +76,23 @@ if scan_button:
     if target_url:
         if is_valid_scan_url(target_url):
             st.header("OWASP ZAP Scan:")
-            st.write(f"Scanning URL: {target_url} with option: {scan_options}")
-            scan_url(target_url, scan_options)
+            st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
+            scan_url(target_url, scan_depth)
             st.markdown("---")
             st.header("Wapiti Scan:")
-            run_wapiti(target_url, scan_options)  # Run Wapiti after ZAP with scan options
+            run_wapiti(target_url, scan_depth)  # Run Wapiti after ZAP with scan depth
             st.markdown("---")
             st.header("SQLMap Scan:")
-            run_sqlmap(target_url)  # Run SQLMap scan
+            run_sqlmap(target_url, scan_depth)  # Run SQLMap scan
             st.markdown("---")
             st.header("XSStrike Scan:")
-            run_XSStrike(target_url, scan_options)  # Run SSTImap scan
+            run_XSStrike(target_url, scan_depth)  # Run XSStrike scan
             st.markdown("---")
             st.header("COMMIX Scan:")
-            run_commix(target_url)  # Run Commix scan
+            run_commix(target_url, scan_depth)  # Run Commix scan
             st.markdown("---")
             st.header("SSTImap Scan:")
-            run_sstimap(target_url, scan_options)  # Run SSTImap scan
+            run_sstimap(target_url, scan_depth)  # Run SSTImap scan
             st.markdown("---")
 
             # Change the scan button to a download button

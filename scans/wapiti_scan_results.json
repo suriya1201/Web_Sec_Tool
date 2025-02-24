@@ -442,7 +442,23 @@
     "Backup file": [],
     "Weak credentials": [],
     "CRLF Injection": [],
-    "Content Security Policy Configuration": [],
+    "Content Security Policy Configuration": [
+      {
+        "method": "GET",
+        "path": "/login.php",
+        "info": "CSP is not set",
+        "level": 1,
+        "parameter": "",
+        "referer": "",
+        "module": "csp",
+        "http_request": "GET /login.php HTTP/1.1\nhost: testphp.vulnweb.com\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://testphp.vulnweb.com/login.php\"",
+        "wstg": [
+          "WSTG-CONF-12",
+          "OSHP-Content-Security-Policy"
+        ]
+      }
+    ],
     "Cross Site Request Forgery": [],
     "Potentially dangerous file": [],
     "Command execution": [],
@@ -514,9 +530,9 @@
   },
   "infos": {
     "target": "http://testphp.vulnweb.com/login.php",
-    "date": "Thu, 20 Feb 2025 12:44:02 +0000",
+    "date": "Mon, 24 Feb 2025 15:07:35 +0000",
     "version": "Wapiti 3.2.2",
-    "scope": "page",
+    "scope": "folder",
     "auth": null,
     "crawled_pages_nbr": 1,
     "detailed_report_level": 0
