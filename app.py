@@ -86,9 +86,62 @@ with tabs[1]:
         target_url = st.text_input("Enter URL to scan")
         scan_depth = st.number_input("Scan Depth", min_value=1, max_value=10, value=1)  # Change to number input for depth
 
+         # Add a multiselect dropdown for scanners with information icon
+        # Add a multiselect dropdown for scanners with information icon
+        st.markdown(
+            """
+            <style>
+            .tooltip {
+                position: relative;
+                display: inline-block;
+                cursor: pointer;
+            }
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 400px;
+                background-color: #555;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+                position: absolute;
+                z-index: 1;
+                bottom: 125%; /* Position the tooltip above the text */
+                left: 50%;
+                margin-left: -100px;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+                opacity: 1;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
+            <div style="display: flex; align-items: center;">
+                <h3 style="margin: 0;">Select Scanners</h3>
+                <div class="tooltip" style="margin-left: 5px;">ℹ️
+                    <span class="tooltiptext">
+                        <b>OWASP ZAP:</b> A popular security tool for finding vulnerabilities in web applications.<br>
+                        <b>Wapiti:</b> A web application vulnerability scanner that audits the security of web applications.<br>
+                        <b>SQLMap:</b> An open-source penetration testing tool that automates the process of detecting and exploiting SQL injection flaws.<br>
+                        <b>XSStrike:</b> A tool for detecting and exploiting XSS vulnerabilities.<br>
+                        <b>COMMIX:</b> A tool for testing web applications for command injection vulnerabilities.<br>
+                        <b>SSTImap:</b> A tool for detecting and exploiting Server-Side Template Injection vulnerabilities.
+                    </span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         # Add a multiselect dropdown for scanners
         selected_scanners = st.multiselect(
-            "Select Scanners",
+            "Options",
             ["OWASP ZAP", "Wapiti", "SQLMap", "XSStrike", "COMMIX", "SSTImap"],
             default=["OWASP ZAP", "Wapiti"]
         )
