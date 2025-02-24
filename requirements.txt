@@ -65,8 +65,8 @@ wapiti3
 sqlmap
 pyreadline
 defusedxml
-argparse~
-mechanize~
-html5lib~
+argparse
+mechanize
+html5lib
 reportlab
 pypdf2
