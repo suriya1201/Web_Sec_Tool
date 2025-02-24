@@ -154,41 +154,44 @@ with tabs[1]:
 if scan_button:
     if target_url:
         if is_valid_scan_url(target_url):
-            if "OWASP ZAP" in selected_scanners:
-                st.header("OWASP ZAP Scan:")
-                st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
-                scan_url(target_url, scan_depth)
-                st.markdown("---")
-            if "Wapiti" in selected_scanners:
-                st.header("Wapiti Scan:")
-                run_wapiti(target_url, scan_depth)  # Run Wapiti after ZAP with scan depth
-            if "SQLMap" in selected_scanners:
-                st.header("SQLMap Scan:")
-                run_sqlmap(target_url, scan_depth)  # Run SQLMap scan
-                st.markdown("---")
-            if "XSStrike" in selected_scanners:
-                st.header("XSStrike Scan:")
-                run_XSStrike(target_url, scan_depth)  # Run XSStrike scan
-                st.markdown("---")
-            if "COMMIX" in selected_scanners:
-                st.header("COMMIX Scan:")
-                run_commix(target_url, scan_depth)  # Run Commix scan
-                st.markdown("---")
-            if "SSTImap" in selected_scanners:
-                st.header("SSTImap Scan:")
-                run_sstimap(target_url, scan_depth)  # Run SSTImap scan
-                st.markdown("---")
+            if not selected_scanners:
+                st.error("Please select at least one scanner.")
+            else:
+                if "OWASP ZAP" in selected_scanners:
+                    st.header("OWASP ZAP Scan:")
+                    st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
+                    scan_url(target_url, scan_depth)
+                    st.markdown("---")
+                if "Wapiti" in selected_scanners:
+                    st.header("Wapiti Scan:")
+                    run_wapiti(target_url, scan_depth)  # Run Wapiti after ZAP with scan depth
+                if "SQLMap" in selected_scanners:
+                    st.header("SQLMap Scan:")
+                    run_sqlmap(target_url, scan_depth)  # Run SQLMap scan
+                    st.markdown("---")
+                if "XSStrike" in selected_scanners:
+                    st.header("XSStrike Scan:")
+                    run_XSStrike(target_url, scan_depth)  # Run XSStrike scan
+                    st.markdown("---")
+                if "COMMIX" in selected_scanners:
+                    st.header("COMMIX Scan:")
+                    run_commix(target_url, scan_depth)  # Run Commix scan
+                    st.markdown("---")
+                if "SSTImap" in selected_scanners:
+                    st.header("SSTImap Scan:")
+                    run_sstimap(target_url, scan_depth)  # Run SSTImap scan
+                    st.markdown("---")
 
-            # Change the scan button to a download button
-            with open("scans/consolidated_scan_results.pdf", "rb") as file:
-                st.session_state.scan_results_pdf = file.read()
+                # Change the scan button to a download button
+                with open("scans/consolidated_scan_results.pdf", "rb") as file:
+                    st.session_state.scan_results_pdf = file.read()
 
-            st.download_button(
-                label="📥 Download Consolidated Scan Results (PDF)",
-                data=st.session_state.scan_results_pdf,
-                file_name="consolidated_scan_results.pdf",
-                mime="application/pdf",
-            )
+                st.download_button(
+                    label="📥 Download Consolidated Scan Results (PDF)",
+                    data=st.session_state.scan_results_pdf,
+                    file_name="consolidated_scan_results.pdf",
+                    mime="application/pdf",
+                )
 
         else:
             st.error(
