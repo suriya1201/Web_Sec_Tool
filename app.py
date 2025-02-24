@@ -7,21 +7,30 @@ import os
 from datetime import datetime
 from analyzer.zap_scanner import scan_url
 from analyzer.wapiti_scanner import run_wapiti  # Import the Wapiti scanner
-from analyzer.injection_scanners import run_sqlmap, run_commix, run_sstimap, run_XSStrike
+from analyzer.injection_scanners import (
+    run_sqlmap,
+    run_commix,
+    run_sstimap,
+    run_XSStrike,
+)
 
 from zapv2 import ZAPv2
+
 
 zap = ZAPv2(
     proxies={"http": "http://localhost:8081", "https": "http://localhost:8081"},
     apikey=os.getenv("ZAP_API_KEY"),
 )
 
+
 # --- Helper Functions ---
 def is_valid_repo_url(url: str) -> bool:
     return url.startswith("http://") or url.startswith("https://")
 
+
 def is_valid_scan_url(url: str) -> bool:
     return url.startswith("http://") or url.startswith("https://")
+
 
 # --- UI Setup ---
 st.set_page_config(page_title="INSPECTIFY", layout="wide")
@@ -30,7 +39,7 @@ st.write("Tool for analyzing code and scanning web applications for vulnerabilit
 
 with st.sidebar:
     st.markdown("<h1 style='font-size: 3em;'>INSPECTIFY</h1>", unsafe_allow_html=True)
-    
+
     st.header("Select task")
     tabs = st.tabs(["Code Analysis", "Vulnerability Scanning"])
 
@@ -43,8 +52,19 @@ with st.sidebar:
             uploaded_files = st.file_uploader(
                 "Upload Code File(s)",
                 type=[
-                    "py", "js", "java", "cpp", "c", "cs", "go",
-                    "rb", "php", "rs", "swift", "kt", "scala"
+                    "py",
+                    "js",
+                    "java",
+                    "cpp",
+                    "c",
+                    "cs",
+                    "go",
+                    "rb",
+                    "php",
+                    "rs",
+                    "swift",
+                    "kt",
+                    "scala",
                 ],
                 accept_multiple_files=True,
             )
@@ -96,19 +116,23 @@ if scan_button:
             st.markdown("---")
 
             # Change the scan button to a download button
-            with open("scans/consolidated_scan_results.md", "r") as file:
-                consolidated_results = file.read()
+            with open("scans/consolidated_scan_results.pdf", "rb") as file:
+                st.session_state.scan_results_pdf = file.read()
 
             st.download_button(
-                label="Download Consolidated Scan Results",
-                data=consolidated_results,
-                file_name="consolidated_scan_results.md",
-                mime="text/markdown",
+                label="📥 Download Consolidated Scan Results (PDF)",
+                data=st.session_state.scan_results_pdf,
+                file_name="consolidated_scan_results.pdf",
+                mime="application/pdf",
             )
+
         else:
-            st.error("Invalid URL. Please enter a valid URL starting with http:// or https://.")
+            st.error(
+                "Invalid URL. Please enter a valid URL starting with http:// or https://."
+            )
     else:
         st.error("Please enter a URL to scan.")
+
 
 # --- Analysis Logic (using httpx for requests to FastAPI) ---
 async def analyze_code_file(files):
@@ -117,12 +141,14 @@ async def analyze_code_file(files):
         files_data = []
         for file in files:
             print(f"  Processing file: {file.name}")
-            files_data.append(('files', (file.name, file.getvalue(), file.type)))
+            files_data.append(("files", (file.name, file.getvalue(), file.type)))
         print(f"  Files data prepared: {files_data}")
 
         try:
             print("  Sending POST request to FastAPI...")
-            response = await client.post("http://127.0.0.1:8001/analyze/file", files=files_data)
+            response = await client.post(
+                "http://127.0.0.1:8001/analyze/file", files=files_data
+            )
             print(f"  Received response. Status: {response.status_code}")
             response.raise_for_status()
             report = VulnerabilityReport(**response.json())
@@ -142,6 +168,7 @@ async def analyze_code_file(files):
             return None
         finally:
             print("--- Finishing analyze_code_file (Streamlit) ---")
+
 
 async def analyze_repo(repo_url, branch, scan_depth):
     print("--- Starting analyze_repo (Streamlit) ---")
@@ -176,6 +203,7 @@ async def analyze_repo(repo_url, branch, scan_depth):
         finally:
             print("--- Finishing analyze_repo (Streamlit) ---")
 
+
 # --- Main Analysis Execution ---
 if analyze_button:
     if input_type == "Upload Code File" and uploaded_files:
@@ -195,7 +223,11 @@ if analyze_button:
                     col6.metric("Info", report.summary["info"])
                 st.metric(
                     "Risk Score",
-                    f"{report.risk_score:.2f}" if report.risk_score is not None else "N/A"
+                    (
+                        f"{report.risk_score:.2f}"
+                        if report.risk_score is not None
+                        else "N/A"
+                    ),
                 )
 
                 st.subheader("Detailed Vulnerabilities")
@@ -218,22 +250,31 @@ if analyze_button:
 
                         if vuln.proof_of_concept:
                             st.write("**Proof of Concept:**")  # Just write the heading
-                            st.code(vuln.proof_of_concept, language="python")  # Display the code
+                            st.code(
+                                vuln.proof_of_concept, language="python"
+                            )  # Display the code
 
                         if vuln.secure_code_example:
-                            st.write("**Secure Code Example:**")  # Just write the heading
-                            st.code(vuln.secure_code_example, language="python")  # Display the code
-
+                            st.write(
+                                "**Secure Code Example:**"
+                            )  # Just write the heading
+                            st.code(
+                                vuln.secure_code_example, language="python"
+                            )  # Display the code
 
                 st.subheader("Chained Vulnerabilities")
                 for chain in report.chained_vulnerabilities:
-                    with st.expander(f"Chain - Combined Severity: {chain.combined_severity}"):
+                    with st.expander(
+                        f"Chain - Combined Severity: {chain.combined_severity}"
+                    ):
                         st.write(f"**Attack Path:** {chain.attack_path}")
                         st.write(f"**Likelihood:** {chain.likelihood}")
                         st.write("**Prerequisites:**")
                         for prereq in chain.prerequisites:
                             st.write(f"- {prereq}")
-                        st.write(f"**Mitigation Priority:** {chain.mitigation_priority}")
+                        st.write(
+                            f"**Mitigation Priority:** {chain.mitigation_priority}"
+                        )
 
     elif input_type == "Provide Repository URL" and repo_url:
         if not is_valid_repo_url(repo_url):
@@ -255,7 +296,11 @@ if analyze_button:
                         col6.metric("Info", report.summary["info"])
                     st.metric(
                         "Risk Score",
-                        f"{report.risk_score:.2f}" if report.risk_score is not None else "N/A"
+                        (
+                            f"{report.risk_score:.2f}"
+                            if report.risk_score is not None
+                            else "N/A"
+                        ),
                     )
 
                     st.subheader("Detailed Vulnerabilities")
@@ -276,22 +321,34 @@ if analyze_button:
                                 for ref in vuln.references:
                                     st.write(f"- [{ref}]({ref})")
                             if vuln.proof_of_concept:
-                                st.write("**Proof of Concept:**")  # Just write the heading
-                                st.code(vuln.proof_of_concept, language="python")  # Display the code
+                                st.write(
+                                    "**Proof of Concept:**"
+                                )  # Just write the heading
+                                st.code(
+                                    vuln.proof_of_concept, language="python"
+                                )  # Display the code
 
                             if vuln.secure_code_example:
-                                st.write("**Secure Code Example:**")  # Just write the heading
-                                st.code(vuln.secure_code_example, language="python")  # Display the code
+                                st.write(
+                                    "**Secure Code Example:**"
+                                )  # Just write the heading
+                                st.code(
+                                    vuln.secure_code_example, language="python"
+                                )  # Display the code
 
                     st.subheader("Chained Vulnerabilities")
                     for chain in report.chained_vulnerabilities:
-                        with st.expander(f"Chain - Combined Severity: {chain.combined_severity}"):
+                        with st.expander(
+                            f"Chain - Combined Severity: {chain.combined_severity}"
+                        ):
                             st.write(f"**Attack Path:** {chain.attack_path}")
                             st.write(f"**Likelihood:** {chain.likelihood}")
                             st.write("**Prerequisites:**")
                             for prereq in chain.prerequisites:
                                 st.write(f"- {prereq}")
-                            st.write(f"**Mitigation Priority:** {chain.mitigation_priority}")
+                            st.write(
+                                f"**Mitigation Priority:** {chain.mitigation_priority}"
+                            )
 
     else:
         st.error("Please provide either a code file or a repository URL.")
