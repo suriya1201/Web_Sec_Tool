@@ -115,3 +115,39 @@
 | Started in 2025-02-24 at 22:48:27 |
 =====================================
 [info] Tested URL : http://testphp.vulnweb.com/listproducts.php?cat=1
+=====================================
+| Started in 2025-02-24 at 23:31:01 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/listproducts.php?cat=1
+=====================================
+| Started in 2025-02-24 at 23:33:53 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/showimage.php?file=
+=====================================
+| Started in 2025-02-24 at 23:33:56 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/artists.php?artist=1
+=====================================
+| Started in 2025-02-24 at 23:36:47 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/comment.php?aid=1
+=====================================
+| Started in 2025-02-24 at 23:36:53 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/hpp/?pp=12
+=====================================
+| Started in 2025-02-24 at 23:39:41 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/listproducts.php?cat=1
+=====================================
+| Started in 2025-02-24 at 23:42:30 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/showimage.php?file=
+=====================================
+| Started in 2025-02-24 at 23:42:34 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/artists.php?artist=1
+=====================================
+| Started in 2025-02-24 at 23:45:24 |
+=====================================
+[info] Tested URL : http://testphp.vulnweb.com/comment.php?aid=1

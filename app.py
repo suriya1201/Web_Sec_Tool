@@ -81,11 +81,17 @@ with st.sidebar:
             uploaded_files = None
 
         analyze_button = st.button("Analyze")
-
-    with tabs[1]:
+with tabs[1]:
         st.write("Vulnerability Scanning (Injection and Broken Access Control)")
         target_url = st.text_input("Enter URL to scan")
         scan_depth = st.number_input("Scan Depth", min_value=1, max_value=10, value=1)  # Change to number input for depth
+
+        # Add a multiselect dropdown for scanners
+        selected_scanners = st.multiselect(
+            "Select Scanners",
+            ["OWASP ZAP", "Wapiti", "SQLMap", "XSStrike", "COMMIX", "SSTImap"],
+            default=["OWASP ZAP", "Wapiti"]
+        )
 
         # Center the "Start Scan" button and make it fill the space
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -95,25 +101,30 @@ with st.sidebar:
 if scan_button:
     if target_url:
         if is_valid_scan_url(target_url):
-            st.header("OWASP ZAP Scan:")
-            st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
-            scan_url(target_url, scan_depth)
-            st.markdown("---")
-            st.header("Wapiti Scan:")
-            run_wapiti(target_url, scan_depth)  # Run Wapiti after ZAP with scan depth
-            st.markdown("---")
-            st.header("SQLMap Scan:")
-            run_sqlmap(target_url, scan_depth)  # Run SQLMap scan
-            st.markdown("---")
-            st.header("XSStrike Scan:")
-            run_XSStrike(target_url, scan_depth)  # Run XSStrike scan
-            st.markdown("---")
-            st.header("COMMIX Scan:")
-            run_commix(target_url, scan_depth)  # Run Commix scan
-            st.markdown("---")
-            st.header("SSTImap Scan:")
-            run_sstimap(target_url, scan_depth)  # Run SSTImap scan
-            st.markdown("---")
+            if "OWASP ZAP" in selected_scanners:
+                st.header("OWASP ZAP Scan:")
+                st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
+                scan_url(target_url, scan_depth)
+                st.markdown("---")
+            if "Wapiti" in selected_scanners:
+                st.header("Wapiti Scan:")
+                run_wapiti(target_url, scan_depth)  # Run Wapiti after ZAP with scan depth
+            if "SQLMap" in selected_scanners:
+                st.header("SQLMap Scan:")
+                run_sqlmap(target_url, scan_depth)  # Run SQLMap scan
+                st.markdown("---")
+            if "XSStrike" in selected_scanners:
+                st.header("XSStrike Scan:")
+                run_XSStrike(target_url, scan_depth)  # Run XSStrike scan
+                st.markdown("---")
+            if "COMMIX" in selected_scanners:
+                st.header("COMMIX Scan:")
+                run_commix(target_url, scan_depth)  # Run Commix scan
+                st.markdown("---")
+            if "SSTImap" in selected_scanners:
+                st.header("SSTImap Scan:")
+                run_sstimap(target_url, scan_depth)  # Run SSTImap scan
+                st.markdown("---")
 
             # Change the scan button to a download button
             with open("scans/consolidated_scan_results.pdf", "rb") as file:
