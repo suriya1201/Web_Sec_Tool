@@ -6,14 +6,11 @@ from utils.latex_generator import LatexGenerator  # Keep for now
 import os
 from datetime import datetime
 from analyzer.zap_scanner import scan_url
-from analyzer.wapiti_scanner import run_wapiti  # Import the Wapiti scanner
-from analyzer.injection_scanners import (
-    run_sqlmap,
-    run_commix,
-    run_sstimap,
-    run_XSStrike,
-)
-
+from analyzer.wapiti_scanner import run_wapiti
+from analyzer.sqlmap_scanner import run_sqlmap
+from analyzer.commix_scanner import run_commix  # Import the Wapiti scanner
+from analyzer.sstimap_scanner import run_sstimap  # Import the Wapiti scanner
+from analyzer.XSStrike_scanner import run_XSStrike  # Import the Wapiti scanner
 from zapv2 import ZAPv2
 
 

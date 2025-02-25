@@ -60,10 +60,10 @@ def disable_passive_scanners(zap):
     zap.core.delete_all_alerts()
 
 
-def generate_pdf_report(alerts):
-    """Generates a PDF report using reportlab."""
-    pdf_path = "scans/consolidated_scan_results.pdf"
-
+def generate_pdf_report(alerts, pdf_path):
+    # Deletes the file if it already exists
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
     c = canvas.Canvas(pdf_path, pagesize=letter)
     width, height = letter
 
@@ -214,6 +214,7 @@ def scan_url(target, scope):
             st.write(alert_message)
             file.write(alert_message)
 
-    generate_pdf_report(alerts)
+    generate_pdf_report(alerts, "scans/zap_scan_results.pdf")
+    generate_pdf_report(alerts, "scans/consolidated_scan_results.pdf")
 
     st.success("Scanning completed. Results saved to consolidated_scan_results.pdf.")

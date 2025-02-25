@@ -13,8 +13,12 @@ from PyPDF2 import PdfReader, PdfWriter
 
 
 def generate_pdf_report(wapiti_results):
-    """Generates a PDF report using reportlab."""
     pdf_path = "scans/wapiti_scan_report.pdf"
+
+    # Deletes the file if it already exists
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
     c = canvas.Canvas(pdf_path, pagesize=letter)
     width, height = letter
 
@@ -31,7 +35,6 @@ def generate_pdf_report(wapiti_results):
     for vuln_type, vuln_list in vulnerabilities.items():
         if not vuln_list:  # Skip empty vulnerability types
             continue
-
         c.setFont("Helvetica-Bold", 14)
         c.setFillColor(colors.darkblue)
         c.drawString(100, y_position, f"Vulnerability Type: {vuln_type}")
@@ -104,16 +107,15 @@ def _draw_text(canvas, text, y_position, page_width):
     return y_position
 
 
-def append_wapiti_to_zap(zap_pdf_path, wapiti_pdf_path, output_pdf_path):
-    """Append Wapiti results PDF to an existing ZAP PDF."""
+def append_wapiti_to_pdf(pdf_path, wapiti_pdf_path, output_pdf_path):
     # Create PDF reader and writer objects
-    zap_reader = PdfReader(zap_pdf_path)
+    pdf_reader = PdfReader(pdf_path)
     wapiti_reader = PdfReader(wapiti_pdf_path)
     pdf_writer = PdfWriter()
 
     # Add all pages from the ZAP PDF
-    for page_num in range(len(zap_reader.pages)):
-        pdf_writer.add_page(zap_reader.pages[page_num])
+    for page_num in range(len(pdf_reader.pages)):
+        pdf_writer.add_page(pdf_reader.pages[page_num])
 
     # Add all pages from the Wapiti PDF
     for page_num in range(len(wapiti_reader.pages)):
@@ -232,8 +234,7 @@ def run_wapiti(target_url, scan_scope):
         generate_pdf_report(wapiti_results)
         wapiti_pdf_path = "scans/wapiti_scan_report.pdf"
         output_pdf_path = "scans/consolidated_scan_results.pdf"
-        append_wapiti_to_zap(pdf_path, wapiti_pdf_path, output_pdf_path)
-
+        append_wapiti_to_pdf(pdf_path, wapiti_pdf_path, output_pdf_path)
         return filtered_vulnerabilities
 
     except subprocess.CalledProcessError as e:
