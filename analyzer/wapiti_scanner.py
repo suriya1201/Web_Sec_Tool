@@ -13,7 +13,7 @@ from PyPDF2 import PdfReader, PdfWriter
 
 
 def generate_pdf_report(wapiti_results):
-    pdf_path = "scans/wapiti_scan_report.pdf"
+    pdf_path = "./scans/wapiti_scan_report.pdf"
 
     # Deletes the file if it already exists
     if os.path.exists(pdf_path):
@@ -150,7 +150,7 @@ def run_wapiti(target_url, scan_depth=1):
 
         # Run the Wapiti scan in a subprocess
         process = subprocess.Popen(
-            ["wapiti", "-u", target_url, "-f", "json", "-o", "./scans/wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1","-d", f" {scan_depth}"],
+            ["wapiti", "-u", target_url, "-f", "json", "-o", "./scans/wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1", "-d", f"{scan_depth}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -170,11 +170,36 @@ def run_wapiti(target_url, scan_depth=1):
         # Update the progress bar to 100% after the scan is complete
         progress_bar.progress(100)
 
+        # Check if the process exited with an error
+        if process.returncode != 0:
+            st.error(f"Wapiti scan failed with return code {process.returncode}")
+            st.error(f"Error message: {stderr}")
+            return None
+
         st.write("Wapiti scan completed.")
 
-        # Read the JSON results
-        with open("scans/wapiti_scan_results.json", "r") as file:
-            wapiti_results = json.load(file)
+        # Check if the result file exists
+        results_file = "./scans/wapiti_scan_results.json"
+        if not os.path.exists(results_file):
+            st.error("Wapiti scan results file was not created.")
+            return None
+
+        # Check if the file has content
+        if os.path.getsize(results_file) == 0:
+            st.error("Wapiti scan results file is empty.")
+            return None
+
+        try:
+            # Read the JSON results
+            with open(results_file, "r", encoding='utf-8') as file:
+                content = file.read()
+                if not content.strip():
+                    st.error("Wapiti scan results file contains no data.")
+                    return None
+                wapiti_results = json.loads(content)
+        except json.JSONDecodeError as json_err:
+            st.error(f"Invalid JSON in Wapiti results: {json_err}")
+            return None
 
         # Extract the vulnerabilities section
         vulnerabilities = wapiti_results.get("vulnerabilities", {})
@@ -185,32 +210,44 @@ def run_wapiti(target_url, scan_depth=1):
         # Display the filtered vulnerabilities section in a nicer format
         st.write("Vulnerabilities found:")
 
-        for vuln_type, vuln_list in filtered_vulnerabilities.items():
-            st.subheader(vuln_type)
-            for vuln in vuln_list:
-                st.markdown(f"**Path:** {vuln.get('path', 'N/A')}")
-                st.markdown(f"**Method:** {vuln.get('method', 'N/A')}")
-                st.markdown(f"**Info:** {vuln.get('info', 'N/A')}")
-                st.markdown(f"**Level:** {vuln.get('level', 'N/A')}")
-                st.markdown(f"**Parameter:** {vuln.get('parameter', 'N/A')}")
-                st.markdown(f"**Referer:** {vuln.get('referer', 'N/A')}")
-                st.markdown(f"**Module:** {vuln.get('module', 'N/A')}")
-                st.markdown(f"**HTTP Request:**")
-                st.code(vuln.get("http_request", "N/A"))
-                st.markdown(f"**CURL Command:**")
-                st.code(vuln.get("curl_command", "N/A"))
-                st.markdown("---")
+        if not filtered_vulnerabilities:
+            st.info("No vulnerabilities were found.")
+        else:
+            for vuln_type, vuln_list in filtered_vulnerabilities.items():
+                st.subheader(vuln_type)
+                for vuln in vuln_list:
+                    st.markdown(f"**Path:** {vuln.get('path', 'N/A')}")
+                    st.markdown(f"**Method:** {vuln.get('method', 'N/A')}")
+                    st.markdown(f"**Info:** {vuln.get('info', 'N/A')}")
+                    st.markdown(f"**Level:** {vuln.get('level', 'N/A')}")
+                    st.markdown(f"**Parameter:** {vuln.get('parameter', 'N/A')}")
+                    st.markdown(f"**Referer:** {vuln.get('referer', 'N/A')}")
+                    st.markdown(f"**Module:** {vuln.get('module', 'N/A')}")
+                    st.markdown(f"**HTTP Request:**")
+                    st.code(vuln.get("http_request", "N/A"))
+                    st.markdown(f"**CURL Command:**")
+                    st.code(vuln.get("curl_command", "N/A"))
+                    st.markdown("---")
 
-        pdf_path = "scans/consolidated_scan_results.pdf"
-        generate_pdf_report(wapiti_results)
-        wapiti_pdf_path = "scans/wapiti_scan_report.pdf"
-        output_pdf_path = "scans/consolidated_scan_results.pdf"
-        append_wapiti_to_pdf(pdf_path, wapiti_pdf_path, output_pdf_path)
+        # Generate and append PDF report only if we have valid results
+        try:
+            pdf_path = "./scans/consolidated_scan_results.pdf"
+            generate_pdf_report(wapiti_results)
+            wapiti_pdf_path = "./scans/wapiti_scan_report.pdf"
+            output_pdf_path = "./scans/consolidated_scan_results.pdf"
+            append_wapiti_to_pdf(pdf_path, wapiti_pdf_path, output_pdf_path)
+        except Exception as pdf_error:
+            st.error(f"Error generating PDF report: {pdf_error}")
+            
         return filtered_vulnerabilities
 
     except subprocess.CalledProcessError as e:
-        st.error(f"Wapiti scan failed: {e.stderr}")
+        st.error(f"Wapiti scan failed: {str(e)}")
+        if hasattr(e, 'stderr'):
+            st.error(f"Error details: {e.stderr}")
         return None
     except Exception as e:
-        st.error(f"An error occurred during Wapiti scan: {e}")
+        st.error(f"An error occurred during Wapiti scan: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
         return None

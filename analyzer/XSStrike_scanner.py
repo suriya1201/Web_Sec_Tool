@@ -8,6 +8,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from PyPDF2 import PdfReader, PdfWriter
+import re
 
 
 def generate_pdf_report(target_url, scan_scope, results):
@@ -88,34 +89,31 @@ def append_XSStrike_to_pdf(pdf_path, XSStrike_pdf_path, output_pdf_path):
     with open(output_pdf_path, "wb") as output_pdf:
         pdf_writer.write(output_pdf)
 
+def remove_ansi_escape_sequences(text):
+    """Remove ANSI escape sequences from the text."""
+    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F][0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub('', text)
 
-def run_XSStrike(target_url, scan_scope="Page Only"):
+def run_XSStrike(target_url, scan_depth=1):
     """Runs XSStrike to test for Cross-Site Scripting (XSS) vulnerabilities and logs results."""
-    st.write(f"Running XSStrike on {target_url} with scope: {scan_scope}...")
+    st.write(f"Running XSStrike on {target_url} with depth: {scan_depth}...")
 
-    command = ["python", "./XSStrike/xsstrike.py", "--url", target_url]
-
-    if scan_scope == "Entire Website":
-        command.append("--crawl -l 10")  # Adjust the crawl depth as needed
+    command = [
+        "python", "./XSStrike/xsstrike.py", "--url", target_url,
+        "--crawl", "-l", str(scan_depth)
+    ]
 
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        result = subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8')
+        
+
+        # Remove ANSI escape sequences from the output
+        clean_output = remove_ansi_escape_sequences(result.stdout)
         st.write("XSStrike scan completed. Results:")
-        st.text(result.stdout)
+        st.text(clean_output)
 
-        # Append the results to the consolidated scan results file
-        os.makedirs("scans", exist_ok=True)
-        with open("scans/consolidated_scan_results.md", "a", encoding="utf-8") as file:
-            file.write("\n# XSStrike Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write(f"**Scope:** {scan_scope}\n")
-            file.write("**Results:**\n")
-            file.write("```\n")
-            file.write(result.stdout)
-            file.write("```\n")
-            file.write("---\n")
 
-        generate_pdf_report(target_url, scan_scope, result.stdout)
+        generate_pdf_report(target_url, scan_depth, result.stdout)
         pdf_path = "scans/consolidated_scan_results.pdf"
         XSStrike_pdf_path = "scans/XSStrike_scan_report.pdf"
         output_pdf_path = "scans/consolidated_scan_results.pdf"
@@ -126,34 +124,9 @@ def run_XSStrike(target_url, scan_scope="Page Only"):
         st.text(e.stdout)
         st.text(e.stderr)
 
-        # Append the error to the consolidated scan results file
-        with open("scans/consolidated_scan_results.md", "a", encoding="utf-8") as file:
-            file.write("\n# XSStrike Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write(f"**Scope:** {scan_scope}\n")
-            file.write("**Error:**\n")
-            file.write("```\n")
-            file.write(e.stdout)
-            file.write(e.stderr)
-            file.write("```\n")
-            file.write("---\n")
 
         pdf_path = "scans/consolidated_scan_results.pdf"
-        generate_pdf_report(target_url, scan_scope, e.stdout)
+        generate_pdf_report(target_url, scan_depth, e.stdout)
         XSStrike_pdf_path = "scans/XSStrike_scan_report.pdf"
         output_pdf_path = "scans/consolidated_scan_results.pdf"
         append_XSStrike_to_pdf(pdf_path, XSStrike_pdf_path, output_pdf_path)
-
-    except Exception as e:
-        st.write(f"Unexpected error: {e}")
-        st.text(str(e))
-
-        # Append the unexpected error to the consolidated scan results file
-        with open("scans/consolidated_scan_results.md", "a", encoding="utf-8") as file:
-            file.write("\n# XSStrike Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write("**Unexpected Error:**\n")
-            file.write("```\n")
-            file.write(str(e))
-            file.write("```\n")
-            file.write("---\n")

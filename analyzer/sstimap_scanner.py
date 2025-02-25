@@ -86,50 +86,27 @@ def append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path):
         pdf_writer.write(output_pdf)
 
 
-def run_sstimap(target_url, scan_scope="Page Only"):
+def run_sstimap(target_url, scan_depth=1):
     """Runs SSTImap to test for Server-Side Template Injection vulnerabilities and logs results."""
-    st.write(f"Running SSTImap on {target_url}...")
+    st.write(f"Running SSTImap on {target_url} with depth: {scan_depth}...")
 
     command = [
-        "python",
-        "./SSTImap/sstimap.py",
-        "--url",
-        target_url,
-        "--no-color",
-        "--forms",
+        "python", "./SSTImap/sstimap.py", "--url", target_url, "--no-color", "--forms",
+        f"--crawl={scan_depth}"
     ]
-    if scan_scope == "Entire Website":
-        command.append("--crawl=10")  # Adjust the crawl depth as needed
 
     # Set the PYTHONIOENCODING environment variable to utf-8
     env = os.environ.copy()
-    env["PYTHONIOENCODING"] = "utf-8"
+    env['PYTHONIOENCODING'] = 'utf-8'
 
     try:
-        result = subprocess.run(
-            command,
-            check=True,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            env=env,
-        )
+        result = subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8', env=env)
         st.write("SSTImap scan completed. Results:")
         st.text(result.stdout)
 
-        # Append the results to the consolidated scan results file
-        os.makedirs("scans", exist_ok=True)
-        with open("scans/consolidated_scan_results.md", "a", encoding="utf-8") as file:
-            file.write("\n# SSTImap Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write("**Results:**\n")
-            file.write("```\n")
-            file.write(result.stdout)
-            file.write("```\n")
-            file.write("---\n")
 
         pdf_path = "scans/consolidated_scan_results.pdf"
-        generate_pdf_report(target_url, scan_scope, result.stdout)
+        generate_pdf_report(target_url, scan_depth, result.stdout)
         sstimap_pdf_path = "scans/sstimap_scan_report.pdf"
         output_pdf_path = "scans/consolidated_scan_results.pdf"
         append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path)
@@ -139,33 +116,9 @@ def run_sstimap(target_url, scan_scope="Page Only"):
         st.text(e.stdout)
         st.text(e.stderr)
 
-        # Append the error to the consolidated scan results file
-        with open("scans/consolidated_scan_results.md", "a", encoding="utf-8") as file:
-            file.write("\n# SSTImap Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write("**Error:**\n")
-            file.write("```\n")
-            file.write(e.stdout)
-            file.write(e.stderr)
-            file.write("```\n")
-            file.write("---\n")
 
-        generate_pdf_report(target_url, scan_scope, e.stdout)
+        generate_pdf_report(target_url, scan_depth, e.stdout)
         pdf_path = "scans/consolidated_scan_results.pdf"
         sstimap_pdf_path = "scans/sstimap_scan_report.pdf"
         output_pdf_path = "scans/consolidated_scan_results.pdf"
         append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path)
-
-    except Exception as e:
-        st.write(f"Unexpected error: {e}")
-        st.text(str(e))
-
-        # Append the unexpected error to the consolidated scan results file
-        with open("scans/consolidated_scan_results.md", "a", encoding="utf-8") as file:
-            file.write("\n# SSTImap Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write("**Unexpected Error:**\n")
-            file.write("```\n")
-            file.write(str(e))
-            file.write("```\n")
-            file.write("---\n")
