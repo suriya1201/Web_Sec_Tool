@@ -92,7 +92,7 @@ def run_commix(target_url, scan_depth=1):
 
     command = [
         "python", "./commix/commix.py", "--url", target_url, "--batch",
-        f"--crawl={scan_depth}"
+        f"--crawl={scan_depth}", "disable-coloring"
     ]
 
     try:
@@ -102,14 +102,20 @@ def run_commix(target_url, scan_depth=1):
 
     
         generate_pdf_report(target_url, scan_depth, result.stdout)
-        pdf_path = "scans/consolidated_scan_results.pdf"
-        commix_pdf_path = "scans/commix_scan_report.pdf"
-        output_pdf_path = "scans/consolidated_scan_results.pdf"
+        pdf_path = "./scans/consolidated_scan_results.pdf"
+        commix_pdf_path = "./scans/commix_scan_report.pdf"
+        output_pdf_path = "./scans/consolidated_scan_results.pdf"
         append_Commix_to_pdf(pdf_path, commix_pdf_path, output_pdf_path)
 
     except subprocess.CalledProcessError as e:
         st.write(f"Error running commix: {e}")
         st.text(e.stdout)
         st.text(e.stderr)
+        
+        generate_pdf_report(target_url, scan_depth, e.stdout)
+        pdf_path = "./scans/consolidated_scan_results.pdf"
+        commix_pdf_path = "./scans/commix_scan_report.pdf"
+        output_pdf_path = "./scans/consolidated_scan_results.pdf"
+        append_Commix_to_pdf(pdf_path, commix_pdf_path, output_pdf_path)
 
         

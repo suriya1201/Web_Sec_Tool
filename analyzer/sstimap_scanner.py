@@ -105,10 +105,10 @@ def run_sstimap(target_url, scan_depth=1):
         st.text(result.stdout)
 
 
-        pdf_path = "scans/consolidated_scan_results.pdf"
+        pdf_path = "./scans/consolidated_scan_results.pdf"
         generate_pdf_report(target_url, scan_depth, result.stdout)
-        sstimap_pdf_path = "scans/sstimap_scan_report.pdf"
-        output_pdf_path = "scans/consolidated_scan_results.pdf"
+        sstimap_pdf_path = "./scans/sstimap_scan_report.pdf"
+        output_pdf_path = "./scans/consolidated_scan_results.pdf"
         append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path)
 
     except subprocess.CalledProcessError as e:
@@ -118,7 +118,7 @@ def run_sstimap(target_url, scan_depth=1):
 
 
         generate_pdf_report(target_url, scan_depth, e.stdout)
-        pdf_path = "scans/consolidated_scan_results.pdf"
-        sstimap_pdf_path = "scans/sstimap_scan_report.pdf"
-        output_pdf_path = "scans/consolidated_scan_results.pdf"
+        pdf_path = "./scans/consolidated_scan_results.pdf"
+        sstimap_pdf_path = "./scans/sstimap_scan_report.pdf"
+        output_pdf_path = "./scans/consolidated_scan_results.pdf"
         append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path)
