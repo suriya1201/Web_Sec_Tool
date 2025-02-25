@@ -148,7 +148,7 @@ def get_risk_color(risk_level):
     return colors.black  # Default to black for unknown risk levels
 
 
-def scan_url(target, scope):
+def scan_url(target, scan_depth=1):
     # Initialize ZAP API
     api_key = os.getenv("ZAP_API_KEY")
     if not api_key:
@@ -163,25 +163,13 @@ def scan_url(target, scope):
     # disable_passive_scanners(zap)
     configure_active_scanners(zap)
 
-    # Page Only: Limit Spider to only the given page (no children)
-    if scope == "Page Only":
-        try:
-            st.write(f"Starting Spider scan on: {target} (Page Only)")
-            zap.spider.scan(url=target, maxchildren=0)
-            time.sleep(5)  # Reduce wait time to give the spider time to start
-        except Exception as e:
-            st.error(f"Error starting Spider scan: {e}")
-            return  # Stop if Spider scan fails
-
-    # Entire Website: Crawl the whole website, follow all links and pages
-    elif scope == "Entire Website":
-        try:
-            st.write(f"Starting Spider scan on: {target} (Entire Website)")
-            zap.spider.scan(url=target, maxchildren=2)
-            time.sleep(5)  # Reduce wait time to give the spider time to start
-        except Exception as e:
-            st.error(f"Error starting Spider scan: {e}")
-            return  # Stop if Spider scan fails
+    try:
+        st.write(f"Starting Spider scan on: {target} with depth: {scan_depth}")
+        zap.spider.scan(url=target, maxchildren=scan_depth)
+        time.sleep(5)  # Reduce wait time to give the spider time to start
+    except Exception as e:
+        st.error(f"Error starting Spider scan: {e}")
+        return  # Stop if Spider scan fails
 
     # Wait for Spider scan to complete
     while int(zap.spider.status()) < 100:

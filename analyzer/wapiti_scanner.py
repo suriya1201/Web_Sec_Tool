@@ -126,60 +126,31 @@ def append_wapiti_to_pdf(pdf_path, wapiti_pdf_path, output_pdf_path):
         pdf_writer.write(output_pdf)
 
 
-def run_wapiti(target_url, scan_scope):
+def run_wapiti(target_url, scan_depth=1):
     try:
-        st.write(f"Starting Wapiti scan on: {target_url}")
+        st.write(f"Starting Wapiti scan on: {target_url} with depth: {scan_depth}")
         # Set the PYTHONIOENCODING environment variable to utf-8
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
 
         # Specify the modules to run for injection and broken access control vulnerabilities
         modules = [
-            "crlf",
-            "exec",
-            "ldap",
-            "log4shell",
-            "sql",
-            "spring4shell",
-            "ssrf",
-            "timesql",
-            "xss",
-            "xxe",  # Injection-related modules
-            "csrf",
-            "file",
-            "htaccess",
-            "http_headers",
-            "redirect",
-            "takeover",
-            "upload",  # BAC-related modules
+            "crlf", "exec", "ldap", "log4shell", "sql", "spring4shell", 
+            "ssrf", "timesql", "xss", "xxe",  # Injection-related modules
+            "csrf", "file", "htaccess", "http_headers", "redirect", 
+            "takeover", "upload"  # BAC-related modules
         ]
-
-        # Determine the scope of the scan
-        if scan_scope == "Entire Website":
-            scope_option = "--scope=domain"
-        else:
-            scope_option = "--scope=page"
-
+        
+        # Ensure the scans directory exists
+        os.makedirs("scans", exist_ok=True)
+        
         # Initialize the progress bar
         progress_bar = st.progress(0)
         progress = 0
 
         # Run the Wapiti scan in a subprocess
         process = subprocess.Popen(
-            [
-                "wapiti",
-                "-u",
-                target_url,
-                "-f",
-                "json",
-                "-o",
-                "scans/wapiti_scan_results.json",
-                "-m",
-                ",".join(modules),
-                "-v",
-                "1",
-                scope_option,
-            ],
+            ["wapiti", "-u", target_url, "-f", "json", "-o", "./scans/wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1","-d", f" {scan_depth}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,

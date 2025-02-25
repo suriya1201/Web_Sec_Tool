@@ -78,28 +78,70 @@ with st.sidebar:
             uploaded_files = None
 
         analyze_button = st.button("Analyze")
-
-    with tabs[1]:
+with tabs[1]:
         st.write("Vulnerability Scanning (Injection and Broken Access Control)")
         target_url = st.text_input("Enter URL to scan")
-        scan_options = st.radio("Scan Options", ["Page Only", "Entire Website"])
+        scan_depth = st.number_input("Scan Depth", min_value=1, max_value=10, value=1)  # Change to number input for depth
 
-        # # Initialize session state for advanced options visibility
-        # if "show_advanced_options" not in st.session_state:
-        #     st.session_state.show_advanced_options = False
+         # Add a multiselect dropdown for scanners with information icon
+        # Add a multiselect dropdown for scanners with information icon
+        st.markdown(
+            """
+            <style>
+            .tooltip {
+                position: relative;
+                display: inline-block;
+                cursor: pointer;
+            }
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 400px;
+                background-color: #555;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+                position: absolute;
+                z-index: 1;
+                bottom: 125%; /* Position the tooltip above the text */
+                left: 50%;
+                margin-left: -100px;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+                opacity: 1;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
+            <div style="display: flex; align-items: center;">
+                <h3 style="margin: 0;">Select Scanners</h3>
+                <div class="tooltip" style="margin-left: 5px;">ℹ️
+                    <span class="tooltiptext">
+                        <b>OWASP ZAP:</b> A popular security tool for finding vulnerabilities in web applications.<br>
+                        <b>Wapiti:</b> A web application vulnerability scanner that audits the security of web applications.<br>
+                        <b>SQLMap:</b> An open-source penetration testing tool that automates the process of detecting and exploiting SQL injection flaws.<br>
+                        <b>XSStrike:</b> A tool for detecting and exploiting XSS vulnerabilities.<br>
+                        <b>COMMIX:</b> A tool for testing web applications for command injection vulnerabilities.<br>
+                        <b>SSTImap:</b> A tool for detecting and exploiting Server-Side Template Injection vulnerabilities.
+                    </span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        # Toggle advanced options visibility
-        # if st.button("Advanced Options"):
-        #     st.session_state.show_advanced_options = not st.session_state.show_advanced_options
-
-        # Add an expander for advanced options
-        # if st.session_state.show_advanced_options:
-        #     with st.expander("Advanced Options"):
-        #         st.write("Here you can configure advanced scan options.")
-        #         # Add your advanced options here
-        #         st.checkbox("Option 1")
-        #         st.checkbox("Option 2")
-        #         st.checkbox("Option 3")
+        # Add a multiselect dropdown for scanners
+        selected_scanners = st.multiselect(
+            "Options",
+            ["OWASP ZAP", "Wapiti", "SQLMap", "XSStrike", "COMMIX", "SSTImap"],
+            default=["OWASP ZAP", "Wapiti"]
+        )
 
         # Center the "Start Scan" button and make it fill the space
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -109,38 +151,44 @@ with st.sidebar:
 if scan_button:
     if target_url:
         if is_valid_scan_url(target_url):
-            st.header("OWASP ZAP Scan:")
-            st.write(f"Scanning URL: {target_url} with option: {scan_options}")
-            scan_url(target_url, scan_options)
-            st.markdown("---")
-            st.header("Wapiti Scan:")
-            run_wapiti(
-                target_url, scan_options
-            )  # Run Wapiti after ZAP with scan options
-            st.markdown("---")
-            st.header("SQLMap Scan:")
-            run_sqlmap(target_url)  # Run SQLMap scan
-            st.markdown("---")
-            st.header("XSStrike Scan:")
-            run_XSStrike(target_url, scan_options)  # Run SSTImap scan
-            st.markdown("---")
-            st.header("COMMIX Scan:")
-            run_commix(target_url)  # Run Commix scan
-            st.markdown("---")
-            st.header("SSTImap Scan:")
-            run_sstimap(target_url, scan_options)  # Run SSTImap scan
-            st.markdown("---")
+            if not selected_scanners:
+                st.error("Please select at least one scanner.")
+            else:
+                if "OWASP ZAP" in selected_scanners:
+                    st.header("OWASP ZAP Scan:")
+                    st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
+                    scan_url(target_url, scan_depth)
+                    st.markdown("---")
+                if "Wapiti" in selected_scanners:
+                    st.header("Wapiti Scan:")
+                    run_wapiti(target_url, scan_depth)  # Run Wapiti after ZAP with scan depth
+                if "SQLMap" in selected_scanners:
+                    st.header("SQLMap Scan:")
+                    run_sqlmap(target_url, scan_depth)  # Run SQLMap scan
+                    st.markdown("---")
+                if "XSStrike" in selected_scanners:
+                    st.header("XSStrike Scan:")
+                    run_XSStrike(target_url, scan_depth)  # Run XSStrike scan
+                    st.markdown("---")
+                if "COMMIX" in selected_scanners:
+                    st.header("COMMIX Scan:")
+                    run_commix(target_url, scan_depth)  # Run Commix scan
+                    st.markdown("---")
+                if "SSTImap" in selected_scanners:
+                    st.header("SSTImap Scan:")
+                    run_sstimap(target_url, scan_depth)  # Run SSTImap scan
+                    st.markdown("---")
 
-            # Change the scan button to a download button
-            with open("scans/consolidated_scan_results.pdf", "rb") as file:
-                st.session_state.scan_results_pdf = file.read()
+                # Change the scan button to a download button
+                with open("scans/consolidated_scan_results.pdf", "rb") as file:
+                    st.session_state.scan_results_pdf = file.read()
 
-            st.download_button(
-                label="📥 Download Consolidated Scan Results (PDF)",
-                data=st.session_state.scan_results_pdf,
-                file_name="consolidated_scan_results.pdf",
-                mime="application/pdf",
-            )
+                st.download_button(
+                    label="📥 Download Consolidated Scan Results (PDF)",
+                    data=st.session_state.scan_results_pdf,
+                    file_name="consolidated_scan_results.pdf",
+                    mime="application/pdf",
+                )
 
         else:
             st.error(
