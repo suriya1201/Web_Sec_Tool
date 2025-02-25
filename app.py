@@ -127,8 +127,8 @@ with tabs[1]:
                         <b>Wapiti:</b> A web application vulnerability scanner that audits the security of web applications.<br>
                         <b>SQLMap:</b> An open-source penetration testing tool that automates the process of detecting and exploiting SQL injection flaws.<br>
                         <b>XSStrike:</b> A tool for detecting and exploiting XSS vulnerabilities.<br>
-                        <b>COMMIX:</b> A tool for testing web applications for command injection vulnerabilities.<br>
-                        <b>SSTImap:</b> A tool for detecting and exploiting Server-Side Template Injection vulnerabilities.
+                        <b>COMMIX:</b> A tool for testing web applications for command injection vulnerabilities.(May take long)<br>
+                        <b>SSTImap:</b> A tool for detecting and exploiting Server-Side Template Injection vulnerabilities.(May take long)
                     </span>
                 </div>
             </div>
