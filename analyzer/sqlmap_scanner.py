@@ -12,7 +12,7 @@ from PyPDF2 import PdfReader, PdfWriter
 
 def generate_pdf_report(target_url, scan_scope, results):
     """Generates a PDF report for sqlmap scan results."""
-    pdf_path = "scans/sqlmap_scan_report.pdf"
+    pdf_path = "./scans/sqlmap_scan_report.pdf"
 
     # Ensure the "scans" directory exists
     if not os.path.exists("scans"):
@@ -88,50 +88,27 @@ def append_sqlmap_to_pdf(pdf_path, sqlmap_pdf_path, output_pdf_path):
         pdf_writer.write(output_pdf)
 
 
-def run_sqlmap(target_url, scan_scope="Page Only"):
+def run_sqlmap(target_url, scan_depth=1):
     """Runs sqlmap on the target URL and saves the output to the specified directory."""
-    st.write(f"Running sqlmap on {target_url} with scope: {scan_scope}...")
+    st.write(f"Running sqlmap on {target_url} with depth: {scan_depth}...")
 
-    command = ["sqlmap", "-u", target_url, "--batch", "--dbs", "--forms"]
-
-    if scan_scope == "Entire Website":
-        command.append("--crawl=10")  # Adjust the crawl depth as needed
+    command = [
+        "sqlmap", "-u", target_url, "--batch",
+        "--dbs", "--forms", f"--crawl={scan_depth}"
+    ]
 
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
         st.write("sqlmap scan completed. Results:")
         st.text(result.stdout)
 
-        # Append the results to the consolidated scan results file
-        with open("scans/consolidated_scan_results.md", "a") as file:
-            file.write("\n# SQLMap Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write(f"**Scope:** {scan_scope}\n")
-            file.write("**Results:**\n")
-            file.write("```\n")
-            file.write(result.stdout)
-            file.write("```\n")
-            file.write("---\n")
-
-        pdf_path = "scans/consolidated_scan_results.pdf"
-        generate_pdf_report(target_url, scan_scope, result.stdout)
-        sqlmap_pdf_path = "scans/sqlmap_scan_report.pdf"
-        output_pdf_path = "scans/consolidated_scan_results.pdf"
+        pdf_path = "./scans/consolidated_scan_results.pdf"
+        generate_pdf_report(target_url, scan_depth, result.stdout)
+        sqlmap_pdf_path = "./scans/sqlmap_scan_report.pdf"
+        output_pdf_path = "./scans/consolidated_scan_results.pdf"
         append_sqlmap_to_pdf(pdf_path, sqlmap_pdf_path, output_pdf_path)
 
     except subprocess.CalledProcessError as e:
         st.write(f"Error running sqlmap: {e}")
         st.text(e.stdout)
         st.text(e.stderr)
-
-        # Append the error to the consolidated scan results file
-        with open("scans/consolidated_scan_results.md", "a") as file:
-            file.write("\n# SQLMap Scan Results\n")
-            file.write(f"**URL:** {target_url}\n")
-            file.write(f"**Scope:** {scan_scope}\n")
-            file.write("**Error:**\n")
-            file.write("```\n")
-            file.write(e.stdout)
-            file.write(e.stderr)
-            file.write("```\n")
-            file.write("---\n")
