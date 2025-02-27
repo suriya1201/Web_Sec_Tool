@@ -18,6 +18,10 @@ def generate_pdf_report(target_url, scan_scope, results):
     if not os.path.exists("scans"):
         os.makedirs("scans")
 
+    # Deletes the file if it already exists
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
     # Create a new PDF canvas
     c = canvas.Canvas(pdf_path, pagesize=letter)
     page_width, page_height = letter
@@ -71,30 +75,18 @@ def _draw_text(c, text, y_position, page_width):
     return y_position
 
 
-def append_sqlmap_to_pdf(pdf_path, sqlmap_pdf_path, output_pdf_path):
-    # Create PDF reader and writer objects
-    pdf_reader = PdfReader(pdf_path)
-    sqlmap_reader = PdfReader(sqlmap_pdf_path)
-    pdf_writer = PdfWriter()
-
-    for page_num in range(len(pdf_reader.pages)):
-        pdf_writer.add_page(pdf_reader.pages[page_num])
-
-    for page_num in range(len(sqlmap_reader.pages)):
-        pdf_writer.add_page(sqlmap_reader.pages[page_num])
-
-    # Write the combined PDF to a file
-    with open(output_pdf_path, "wb") as output_pdf:
-        pdf_writer.write(output_pdf)
-
-
-def run_sqlmap(target_url, scan_depth=1):
+def run_sqlmap(report_manager, target_url, scan_depth=1):
     """Runs sqlmap on the target URL and saves the output to the specified directory."""
     st.write(f"Running sqlmap on {target_url} with depth: {scan_depth}...")
 
     command = [
-        "sqlmap", "-u", target_url, "--batch",
-        "--dbs", "--forms", f"--crawl={scan_depth}"
+        "sqlmap",
+        "-u",
+        target_url,
+        "--batch",
+        "--dbs",
+        "--forms",
+        f"--crawl={scan_depth}",
     ]
 
     try:
@@ -102,11 +94,8 @@ def run_sqlmap(target_url, scan_depth=1):
         st.write("sqlmap scan completed. Results:")
         st.text(result.stdout)
 
-        pdf_path = "./scans/consolidated_scan_results.pdf"
         generate_pdf_report(target_url, scan_depth, result.stdout)
-        sqlmap_pdf_path = "./scans/sqlmap_scan_report.pdf"
-        output_pdf_path = "./scans/consolidated_scan_results.pdf"
-        append_sqlmap_to_pdf(pdf_path, sqlmap_pdf_path, output_pdf_path)
+        report_manager.append_to_pdf("./scans/sqlmap_scan_report.pdf")
 
     except subprocess.CalledProcessError as e:
         st.write(f"Error running sqlmap: {e}")

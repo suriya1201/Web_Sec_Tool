@@ -61,9 +61,15 @@ def disable_passive_scanners(zap):
 
 
 def generate_pdf_report(alerts, pdf_path):
+
+    # Ensure the "scans" directory exists
+    if not os.path.exists("scans"):
+        os.makedirs("scans")
+
     # Deletes the file if it already exists
     if os.path.exists(pdf_path):
         os.remove(pdf_path)
+
     c = canvas.Canvas(pdf_path, pagesize=letter)
     width, height = letter
 
@@ -148,7 +154,7 @@ def get_risk_color(risk_level):
     return colors.black  # Default to black for unknown risk levels
 
 
-def scan_url(target, scan_depth=1):
+def scan_url(report_manager, target, scan_depth=1):
     # Initialize ZAP API
     api_key = os.getenv("ZAP_API_KEY")
     if not api_key:
@@ -198,11 +204,10 @@ def scan_url(target, scan_depth=1):
     with open("scans/zap_scan_results.txt", "w", encoding="utf-8") as file:
         for alert in alerts:
             alert_message = f"🛑 **[{alert['risk']}] {alert['name']}**\n🔗 **URL:** {alert['url']}\n\n"
-            # alert_message = f"[{alert['risk']}] {alert['name']} - {alert['url']}\n"
             st.write(alert_message)
             file.write(alert_message)
 
     generate_pdf_report(alerts, "scans/zap_scan_results.pdf")
-    generate_pdf_report(alerts, "scans/consolidated_scan_results.pdf")
+    report_manager.append_to_pdf("./scans/zap_scan_results.pdf")
 
     st.success("Scanning completed. Results saved to consolidated_scan_results.pdf.")

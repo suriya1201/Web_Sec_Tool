@@ -19,6 +19,10 @@ def generate_pdf_report(target_url, scan_scope, results):
     if not os.path.exists("scans"):
         os.makedirs("scans")
 
+    # Deletes the file if it already exists
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
     # Create a new PDF canvas
     c = canvas.Canvas(pdf_path, pagesize=letter)
     page_width, page_height = letter
@@ -72,61 +76,42 @@ def _draw_text(c, text, y_position, page_width):
     return y_position
 
 
-def append_XSStrike_to_pdf(pdf_path, XSStrike_pdf_path, output_pdf_path):
-    # Create PDF reader and writer objects
-    pdf_reader = PdfReader(pdf_path)
-    XSStrike_reader = PdfReader(XSStrike_pdf_path)
-    pdf_writer = PdfWriter()
-
-    for page_num in range(len(pdf_reader.pages)):
-        pdf_writer.add_page(pdf_reader.pages[page_num])
-
-    # Add all pages from the XSStrike PDF
-    for page_num in range(len(XSStrike_reader.pages)):
-        pdf_writer.add_page(XSStrike_reader.pages[page_num])
-
-    # Write the combined PDF to a file
-    with open(output_pdf_path, "wb") as output_pdf:
-        pdf_writer.write(output_pdf)
-
 def remove_ansi_escape_sequences(text):
     """Remove ANSI escape sequences from the text."""
-    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F][0-?]*[ -/]*[@-~])')
-    return ansi_escape.sub('', text)
+    ansi_escape = re.compile(r"(?:\x1B[@-_]|[\x80-\x9F][0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
 
-def run_XSStrike(target_url, scan_depth=1):
+
+def run_XSStrike(report_manager, target_url, scan_depth=1):
     """Runs XSStrike to test for Cross-Site Scripting (XSS) vulnerabilities and logs results."""
     st.write(f"Running XSStrike on {target_url} with depth: {scan_depth}...")
 
     command = [
-        "python", "./XSStrike/xsstrike.py", "--url", target_url,
-        "--crawl", "-l", str(scan_depth)
+        "python",
+        "./XSStrike/xsstrike.py",
+        "--url",
+        target_url,
+        "--crawl",
+        "-l",
+        str(scan_depth),
     ]
 
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8')
-        
+        result = subprocess.run(
+            command, check=True, capture_output=True, text=True, encoding="utf-8"
+        )
 
         # Remove ANSI escape sequences from the output
         clean_output = remove_ansi_escape_sequences(result.stdout)
         st.write("XSStrike scan completed. Results:")
         st.text(clean_output)
-
-
-        generate_pdf_report(target_url, scan_depth, result.stdout)
-        pdf_path = "scans/consolidated_scan_results.pdf"
-        XSStrike_pdf_path = "scans/XSStrike_scan_report.pdf"
-        output_pdf_path = "scans/consolidated_scan_results.pdf"
-        append_XSStrike_to_pdf(pdf_path, XSStrike_pdf_path, output_pdf_path)
+        generate_pdf_report(target_url, scan_depth, clean_output)
+        report_manager.append_to_pdf("./scans/XSStrike_scan_report.pdf")
 
     except subprocess.CalledProcessError as e:
         st.write(f"Error running XSStrike: {e}")
         st.text(e.stdout)
         st.text(e.stderr)
 
-
-        pdf_path = "scans/consolidated_scan_results.pdf"
         generate_pdf_report(target_url, scan_depth, e.stdout)
-        XSStrike_pdf_path = "scans/XSStrike_scan_report.pdf"
-        output_pdf_path = "scans/consolidated_scan_results.pdf"
-        append_XSStrike_to_pdf(pdf_path, XSStrike_pdf_path, output_pdf_path)
+        report_manager.append_to_pdf("./scans/XSStrike_scan_report.pdf")

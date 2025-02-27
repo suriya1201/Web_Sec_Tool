@@ -17,6 +17,10 @@ def generate_pdf_report(target_url, scan_scope, results):
     if not os.path.exists("scans"):
         os.makedirs("scans")
 
+    # Deletes the file if it already exists
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
     # Create a new PDF canvas
     c = canvas.Canvas(pdf_path, pagesize=letter)
     page_width, page_height = letter
@@ -70,29 +74,18 @@ def _draw_text(c, text, y_position, page_width):
     return y_position
 
 
-def append_Commix_to_pdf(pdf_path, commix_pdf_path, output_pdf_path):
-    # Create PDF reader and writer objects
-    pdf_reader = PdfReader(pdf_path)
-    commix_reader = PdfReader(commix_pdf_path)
-    pdf_writer = PdfWriter()
-
-    for page_num in range(len(pdf_reader.pages)):
-        pdf_writer.add_page(pdf_reader.pages[page_num])
-
-    for page_num in range(len(commix_reader.pages)):
-        pdf_writer.add_page(commix_reader.pages[page_num])
-
-    with open(output_pdf_path, "wb") as output_pdf:
-        pdf_writer.write(output_pdf)
-
-
-def run_commix(target_url, scan_depth=1):
+def run_commix(report_manager, target_url, scan_depth=1):
     """Runs commix for command injection testing and logs results."""
     st.write(f"Running commix on {target_url} with depth: {scan_depth}...")
 
     command = [
-        "python", "./commix/commix.py", "--url", target_url, "--batch",
-        f"--crawl={scan_depth}", "disable-coloring"
+        "python",
+        "./commix/commix.py",
+        "--url",
+        target_url,
+        "--batch",
+        f"--crawl={scan_depth}",
+        "disable-coloring",
     ]
 
     try:
@@ -100,22 +93,13 @@ def run_commix(target_url, scan_depth=1):
         st.write("Commix scan completed. Results:")
         st.text(result.stdout)
 
-    
         generate_pdf_report(target_url, scan_depth, result.stdout)
-        pdf_path = "./scans/consolidated_scan_results.pdf"
-        commix_pdf_path = "./scans/commix_scan_report.pdf"
-        output_pdf_path = "./scans/consolidated_scan_results.pdf"
-        append_Commix_to_pdf(pdf_path, commix_pdf_path, output_pdf_path)
+        report_manager.append_to_pdf("./scans/commix_scan_report.pdf")
 
     except subprocess.CalledProcessError as e:
         st.write(f"Error running commix: {e}")
         st.text(e.stdout)
         st.text(e.stderr)
-        
-        generate_pdf_report(target_url, scan_depth, e.stdout)
-        pdf_path = "./scans/consolidated_scan_results.pdf"
-        commix_pdf_path = "./scans/commix_scan_report.pdf"
-        output_pdf_path = "./scans/consolidated_scan_results.pdf"
-        append_Commix_to_pdf(pdf_path, commix_pdf_path, output_pdf_path)
 
-        
+        generate_pdf_report(target_url, scan_depth, e.stdout)
+        report_manager.append_to_pdf("./scans/commix_scan_report.pdf")

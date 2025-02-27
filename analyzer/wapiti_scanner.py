@@ -15,6 +15,10 @@ from PyPDF2 import PdfReader, PdfWriter
 def generate_pdf_report(wapiti_results):
     pdf_path = "./scans/wapiti_scan_report.pdf"
 
+    # Ensure the "scans" directory exists
+    if not os.path.exists("scans"):
+        os.makedirs("scans")
+
     # Deletes the file if it already exists
     if os.path.exists(pdf_path):
         os.remove(pdf_path)
@@ -107,26 +111,7 @@ def _draw_text(canvas, text, y_position, page_width):
     return y_position
 
 
-def append_wapiti_to_pdf(pdf_path, wapiti_pdf_path, output_pdf_path):
-    # Create PDF reader and writer objects
-    pdf_reader = PdfReader(pdf_path)
-    wapiti_reader = PdfReader(wapiti_pdf_path)
-    pdf_writer = PdfWriter()
-
-    # Add all pages from the ZAP PDF
-    for page_num in range(len(pdf_reader.pages)):
-        pdf_writer.add_page(pdf_reader.pages[page_num])
-
-    # Add all pages from the Wapiti PDF
-    for page_num in range(len(wapiti_reader.pages)):
-        pdf_writer.add_page(wapiti_reader.pages[page_num])
-
-    # Write the combined PDF to a file
-    with open(output_pdf_path, "wb") as output_pdf:
-        pdf_writer.write(output_pdf)
-
-
-def run_wapiti(target_url, scan_depth=1):
+def run_wapiti(report_manager, target_url, scan_depth=1):
     try:
         st.write(f"Starting Wapiti scan on: {target_url} with depth: {scan_depth}")
         # Set the PYTHONIOENCODING environment variable to utf-8
@@ -135,22 +120,49 @@ def run_wapiti(target_url, scan_depth=1):
 
         # Specify the modules to run for injection and broken access control vulnerabilities
         modules = [
-            "crlf", "exec", "ldap", "log4shell", "sql", "spring4shell", 
-            "ssrf", "timesql", "xss", "xxe",  # Injection-related modules
-            "csrf", "file", "htaccess", "http_headers", "redirect", 
-            "takeover", "upload"  # BAC-related modules
+            "crlf",
+            "exec",
+            "ldap",
+            "log4shell",
+            "sql",
+            "spring4shell",
+            "ssrf",
+            "timesql",
+            "xss",
+            "xxe",  # Injection-related modules
+            "csrf",
+            "file",
+            "htaccess",
+            "http_headers",
+            "redirect",
+            "takeover",
+            "upload",  # BAC-related modules
         ]
-        
+
         # Ensure the scans directory exists
         os.makedirs("scans", exist_ok=True)
-        
+
         # Initialize the progress bar
         progress_bar = st.progress(0)
         progress = 0
 
         # Run the Wapiti scan in a subprocess
         process = subprocess.Popen(
-            ["wapiti", "-u", target_url, "-f", "json", "-o", "./scans/wapiti_scan_results.json", "-m", ",".join(modules), "-v", "1", "-d", f"{scan_depth}"],
+            [
+                "wapiti",
+                "-u",
+                target_url,
+                "-f",
+                "json",
+                "-o",
+                "./scans/wapiti_scan_results.json",
+                "-m",
+                ",".join(modules),
+                "-v",
+                "1",
+                "-d",
+                f"{scan_depth}",
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -191,7 +203,7 @@ def run_wapiti(target_url, scan_depth=1):
 
         try:
             # Read the JSON results
-            with open(results_file, "r", encoding='utf-8') as file:
+            with open(results_file, "r", encoding="utf-8") as file:
                 content = file.read()
                 if not content.strip():
                     st.error("Wapiti scan results file contains no data.")
@@ -231,23 +243,22 @@ def run_wapiti(target_url, scan_depth=1):
 
         # Generate and append PDF report only if we have valid results
         try:
-            pdf_path = "./scans/consolidated_scan_results.pdf"
             generate_pdf_report(wapiti_results)
-            wapiti_pdf_path = "./scans/wapiti_scan_report.pdf"
-            output_pdf_path = "./scans/consolidated_scan_results.pdf"
-            append_wapiti_to_pdf(pdf_path, wapiti_pdf_path, output_pdf_path)
+            report_manager.append_to_pdf("./scans/wapiti_scan_report")
+
         except Exception as pdf_error:
             st.error(f"Error generating PDF report: {pdf_error}")
-            
+
         return filtered_vulnerabilities
 
     except subprocess.CalledProcessError as e:
         st.error(f"Wapiti scan failed: {str(e)}")
-        if hasattr(e, 'stderr'):
+        if hasattr(e, "stderr"):
             st.error(f"Error details: {e.stderr}")
         return None
     except Exception as e:
         st.error(f"An error occurred during Wapiti scan: {str(e)}")
         import traceback
+
         st.error(traceback.format_exc())
         return None

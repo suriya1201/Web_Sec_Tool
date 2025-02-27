@@ -17,6 +17,10 @@ def generate_pdf_report(target_url, scan_scope, results):
     if not os.path.exists("scans"):
         os.makedirs("scans")
 
+    # Deletes the file if it already exists
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
     # Create a new PDF canvas
     c = canvas.Canvas(pdf_path, pagesize=letter)
     page_width, page_height = letter
@@ -70,55 +74,43 @@ def _draw_text(c, text, y_position, page_width):
     return y_position
 
 
-def append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path):
-    # Create PDF reader and writer objects
-    pdf_reader = PdfReader(pdf_path)
-    sstimap_reader = PdfReader(sstimap_pdf_path)
-    pdf_writer = PdfWriter()
-
-    for page_num in range(len(pdf_reader.pages)):
-        pdf_writer.add_page(pdf_reader.pages[page_num])
-
-    for page_num in range(len(sstimap_reader.pages)):
-        pdf_writer.add_page(sstimap_reader.pages[page_num])
-
-    with open(output_pdf_path, "wb") as output_pdf:
-        pdf_writer.write(output_pdf)
-
-
-def run_sstimap(target_url, scan_depth=1):
+def run_sstimap(report_manager, target_url, scan_depth=1):
     """Runs SSTImap to test for Server-Side Template Injection vulnerabilities and logs results."""
     st.write(f"Running SSTImap on {target_url} with depth: {scan_depth}...")
 
     command = [
-        "python", "./SSTImap/sstimap.py", "--url", target_url, "--no-color", "--forms",
-        f"--crawl={scan_depth}"
+        "python",
+        "./SSTImap/sstimap.py",
+        "--url",
+        target_url,
+        "--no-color",
+        "--forms",
+        f"--crawl={scan_depth}",
     ]
 
     # Set the PYTHONIOENCODING environment variable to utf-8
     env = os.environ.copy()
-    env['PYTHONIOENCODING'] = 'utf-8'
+    env["PYTHONIOENCODING"] = "utf-8"
 
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8', env=env)
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
         st.write("SSTImap scan completed. Results:")
         st.text(result.stdout)
 
-
-        pdf_path = "./scans/consolidated_scan_results.pdf"
-        generate_pdf_report(target_url, scan_depth, result.stdout)
-        sstimap_pdf_path = "./scans/sstimap_scan_report.pdf"
-        output_pdf_path = "./scans/consolidated_scan_results.pdf"
-        append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path)
+        generate_pdf_report(target_url, scan_depth, e.stdout)
+        report_manager.append_to_pdf("./scans/sstimap_scan_report.pdf")
 
     except subprocess.CalledProcessError as e:
         st.write(f"Error running SSTImap: {e}")
         st.text(e.stdout)
         st.text(e.stderr)
 
-
         generate_pdf_report(target_url, scan_depth, e.stdout)
-        pdf_path = "./scans/consolidated_scan_results.pdf"
-        sstimap_pdf_path = "./scans/sstimap_scan_report.pdf"
-        output_pdf_path = "./scans/consolidated_scan_results.pdf"
-        append_sstimap_to_pdf(pdf_path, sstimap_pdf_path, output_pdf_path)
+        report_manager.append_to_pdf("./scans/sstimap_scan_report.pdf")

@@ -11,6 +11,7 @@ from analyzer.sqlmap_scanner import run_sqlmap
 from analyzer.commix_scanner import run_commix  # Import the Wapiti scanner
 from analyzer.sstimap_scanner import run_sstimap  # Import the Wapiti scanner
 from analyzer.XSStrike_scanner import run_XSStrike  # Import the Wapiti scanner
+from report_manager import ReportManager
 from zapv2 import ZAPv2
 
 
@@ -79,14 +80,16 @@ with st.sidebar:
 
         analyze_button = st.button("Analyze")
 with tabs[1]:
-        st.write("Vulnerability Scanning (Injection and Broken Access Control)")
-        target_url = st.text_input("Enter URL to scan")
-        scan_depth = st.number_input("Scan Depth", min_value=1, max_value=10, value=1)  # Change to number input for depth
+    st.write("Vulnerability Scanning (Injection and Broken Access Control)")
+    target_url = st.text_input("Enter URL to scan")
+    scan_depth = st.number_input(
+        "Scan Depth", min_value=1, max_value=10, value=1
+    )  # Change to number input for depth
 
-         # Add a multiselect dropdown for scanners with information icon
-        # Add a multiselect dropdown for scanners with information icon
-        st.markdown(
-            """
+    # Add a multiselect dropdown for scanners with information icon
+    # Add a multiselect dropdown for scanners with information icon
+    st.markdown(
+        """
             <style>
             .tooltip {
                 position: relative;
@@ -115,10 +118,10 @@ with tabs[1]:
             }
             </style>
             """,
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            """
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
             <div style="display: flex; align-items: center;">
                 <h3 style="margin: 0;">Select Scanners</h3>
                 <div class="tooltip" style="margin-left: 5px;">ℹ️
@@ -133,20 +136,20 @@ with tabs[1]:
                 </div>
             </div>
             """,
-            unsafe_allow_html=True,
-        )
+        unsafe_allow_html=True,
+    )
 
-        # Add a multiselect dropdown for scanners
-        selected_scanners = st.multiselect(
-            "Options",
-            ["OWASP ZAP", "Wapiti", "SQLMap", "XSStrike", "COMMIX", "SSTImap"],
-            default=["OWASP ZAP", "Wapiti"]
-        )
+    # Add a multiselect dropdown for scanners
+    selected_scanners = st.multiselect(
+        "Options",
+        ["OWASP ZAP", "Wapiti", "SQLMap", "XSStrike", "COMMIX", "SSTImap"],
+        default=["OWASP ZAP", "Wapiti"],
+    )
 
-        # Center the "Start Scan" button and make it fill the space
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            scan_button = st.button("Start Scan", use_container_width=True)
+    # Center the "Start Scan" button and make it fill the space
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        scan_button = st.button("Start Scan", use_container_width=True)
 
 if scan_button:
     if target_url:
@@ -154,29 +157,40 @@ if scan_button:
             if not selected_scanners:
                 st.error("Please select at least one scanner.")
             else:
+                report_manager = ReportManager("./scans/consolidated_scan_results.pdf")
                 if "OWASP ZAP" in selected_scanners:
                     st.header("OWASP ZAP Scan:")
                     st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
-                    scan_url(target_url, scan_depth)
+                    scan_url(report_manager, target_url, scan_depth)
                     st.markdown("---")
                 if "Wapiti" in selected_scanners:
                     st.header("Wapiti Scan:")
-                    run_wapiti(target_url, scan_depth)  # Run Wapiti after ZAP with scan depth
+                    run_wapiti(
+                        report_manager, target_url, scan_depth
+                    )  # Run Wapiti after ZAP with scan depth
                 if "SQLMap" in selected_scanners:
                     st.header("SQLMap Scan:")
-                    run_sqlmap(target_url, scan_depth)  # Run SQLMap scan
+                    run_sqlmap(
+                        report_manager, target_url, scan_depth
+                    )  # Run SQLMap scan
                     st.markdown("---")
                 if "XSStrike" in selected_scanners:
                     st.header("XSStrike Scan:")
-                    run_XSStrike(target_url, scan_depth)  # Run XSStrike scan
+                    run_XSStrike(
+                        report_manager, target_url, scan_depth
+                    )  # Run XSStrike scan
                     st.markdown("---")
                 if "COMMIX" in selected_scanners:
                     st.header("COMMIX Scan:")
-                    run_commix(target_url, scan_depth)  # Run Commix scan
+                    run_commix(
+                        report_manager, target_url, scan_depth
+                    )  # Run Commix scan
                     st.markdown("---")
                 if "SSTImap" in selected_scanners:
                     st.header("SSTImap Scan:")
-                    run_sstimap(target_url, scan_depth)  # Run SSTImap scan
+                    run_sstimap(
+                        report_manager, target_url, scan_depth
+                    )  # Run SSTImap scan
                     st.markdown("---")
 
                 # Change the scan button to a download button
