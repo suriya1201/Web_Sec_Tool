@@ -244,7 +244,7 @@ def run_wapiti(report_manager, target_url, scan_depth=1):
         # Generate and append PDF report only if we have valid results
         try:
             generate_pdf_report(wapiti_results)
-            report_manager.append_to_pdf("./scans/wapiti_scan_report")
+            report_manager.append_to_pdf("./scans/wapiti_scan_report.pdf")
 
         except Exception as pdf_error:
             st.error(f"Error generating PDF report: {pdf_error}")
