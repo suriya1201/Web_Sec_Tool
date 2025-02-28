@@ -85,6 +85,8 @@ def run_sstimap(report_manager, target_url, scan_depth=1):
         target_url,
         "--no-color",
         "--forms",
+        "--empty-forms",\
+        "--header",	
         f"--crawl={scan_depth}",
     ]
 
