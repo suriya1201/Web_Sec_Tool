@@ -104,7 +104,7 @@ def run_sstimap(report_manager, target_url, scan_depth=1):
         st.write("SSTImap scan completed. Results:")
         st.text(result.stdout)
 
-        generate_pdf_report(target_url, scan_depth, e.stdout)
+        generate_pdf_report(target_url, scan_depth, result.stdout)
         report_manager.append_to_pdf("./scans/sstimap_scan_report.pdf")
 
     except subprocess.CalledProcessError as e:
