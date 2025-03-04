@@ -31,21 +31,45 @@ class PDFGenerator:
         self.elements.append(Spacer(1, 12))
 
     def _add_summary(self, report: VulnerabilityReport):
-        self.elements.append(Paragraph("Summary", self.styles["Heading2"]))
+        """Add the executive summary section to the PDF using ReportLab."""
+        # Add summary title
+        self.elements.append(Paragraph("Executive Summary", self.styles["Heading2"]))
+        self.elements.append(Spacer(1, 6))
+        
+        # Check if summary exists
+        if not hasattr(report, 'summary') or report.summary is None:
+            self.elements.append(Paragraph("No summary data available.", self.styles["Normal"]))
+            self.elements.append(Spacer(1, 12))
+            return
+        
+        # Get summary data with safe fallbacks
+        total_vulns = report.summary.get('total', 'N/A') if isinstance(report.summary, dict) else 'N/A'
+        high_risk = report.summary.get('high', 'N/A') if isinstance(report.summary, dict) else 'N/A'
+        medium_risk = report.summary.get('medium', 'N/A') if isinstance(report.summary, dict) else 'N/A'
+        low_risk = report.summary.get('low', 'N/A') if isinstance(report.summary, dict) else 'N/A'
+        
+        # Create summary list
         summary_data = [
-            f"Total Vulnerabilities: {report.summary['total']}",
-            f"Critical: {report.summary['critical']}",
-            f"High: {report.summary['high']}",
-            f"Medium: {report.summary['medium']}",
-            f"Low: {report.summary['low']}",
-            f"Info: {report.summary['info']}",
-            f"Risk Score: {report.risk_score:.2f}" if report.risk_score is not None else "Risk Score: N/A",
+            f"<b>Total Vulnerabilities:</b> {total_vulns}",
+            f"<b>High Risk:</b> {high_risk}",
+            f"<b>Medium Risk:</b> {medium_risk}",
+            f"<b>Low Risk:</b> {low_risk}"
         ]
+        
+        # Add summary list
         bullet_list = ListFlowable(
             [ListItem(Paragraph(data, self.styles['Normal'])) for data in summary_data],
-            bulletType='bullet'
+            bulletType='bullet',
+            leftIndent=20
         )
         self.elements.append(bullet_list)
+        
+        # Add general assessment if available
+        if isinstance(report.summary, dict) and 'assessment' in report.summary:
+            self.elements.append(Spacer(1, 10))
+            self.elements.append(Paragraph("General Assessment:", self.styles["Heading3"]))
+            self.elements.append(Paragraph(report.summary['assessment'], self.styles["Normal"]))
+        
         self.elements.append(Spacer(1, 12))
 
 

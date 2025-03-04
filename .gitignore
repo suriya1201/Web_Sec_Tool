@@ -174,3 +174,4 @@ cython_debug/
 .vscode/tasks.json
 zap_scan_results.txt
 
+/analysis

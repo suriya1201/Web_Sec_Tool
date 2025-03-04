@@ -8,6 +8,7 @@
 3. Install modules ```pip install -r requirements.txt```
 4. Create .env file with the contents:
 ```
+GEMINI_API_KEY=your_gemini_key
 OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_anthropic_key
 ZAP_API_KEY=your_ZAP_key

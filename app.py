@@ -345,9 +345,43 @@ async def analyze_code_file(files):
 
 
 async def analyze_repo(repo_url, branch, scan_depth):
+    """
+    Analyze a code repository for security vulnerabilities with improved error handling and logging.
+    
+    Args:
+        repo_url: The URL of the repository to analyze
+        branch: The branch to analyze
+        scan_depth: The depth to scan the repository
+        
+    Returns:
+        VulnerabilityReport or None: The analysis report or None if an error occurred
+    """
     print("--- Starting analyze_repo (Streamlit) ---")
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        try:
+    print(f"  Repository URL: {repo_url}")
+    print(f"  Branch: {branch}")
+    print(f"  Scan Depth: {scan_depth}")
+    
+    # Check if the API service is running
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            health_check = await client.get("http://127.0.0.1:8001/health")
+            if health_check.status_code != 200:
+                st.error("The analysis service is not responding. Please make sure it's running.")
+                print(f"  API health check failed: {health_check.status_code}")
+                return None
+    except Exception as e:
+        st.error("Could not connect to the analysis service. Please ensure it's running on port 8001.")
+        print(f"  API connection error: {str(e)}")
+        return None
+        
+    # Sanitize repository URL
+    if not repo_url.startswith(("http://", "https://")):
+        repo_url = f"https://{repo_url}"
+        print(f"  URL adjusted to: {repo_url}")
+    
+    # Proceed with the analysis with an increased timeout
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:  # Increase timeout to 2 minutes
             print("  Sending POST request to FastAPI...")
             response = await client.post(
                 "http://127.0.0.1:8001/analyze/repository",
@@ -362,20 +396,30 @@ async def analyze_repo(repo_url, branch, scan_depth):
             report = VulnerabilityReport(**response.json())
             print("  Response parsed successfully.")
             return report
-        except httpx.RequestError as e:
-            print(f"  Network error: {e}")
-            st.error(f"Network error: {e}")
-            return None
-        except httpx.HTTPStatusError as e:
-            print(f"  Server error: {e.response.status_code} - {e.response.text}")
-            st.error(f"Server error: {e.response.status_code} - {e.response.text}")
-            return None
-        except Exception as e:
-            print(f"  Unexpected error: {e}")
-            st.error(f"Unexpected error: {e}")
-            return None
-        finally:
-            print("--- Finishing analyze_repo (Streamlit) ---")
+    except httpx.ConnectError:
+        error_msg = "Connection error: Could not connect to the analysis service. Make sure the API server is running."
+        print(f"  {error_msg}")
+        st.error(error_msg)
+        return None
+    except httpx.TimeoutException:
+        error_msg = "Timeout error: The analysis took too long. Try reducing the scan depth or try again later."
+        print(f"  {error_msg}")
+        st.error(error_msg)
+        return None
+    except httpx.RequestError as e:
+        print(f"  Network error: {e}")
+        st.error(f"Network error: {str(e)}")
+        return None
+    except httpx.HTTPStatusError as e:
+        print(f"  Server error: {e.response.status_code} - {e.response.text}")
+        st.error(f"Server error: {e.response.status_code} - {e.response.text}")
+        return None
+    except Exception as e:
+        print(f"  Unexpected error: {e}")
+        st.error(f"Unexpected error: {str(e)}")
+        return None
+    finally:
+        print("--- Finishing analyze_repo (Streamlit) ---")
 
 
 # Function to generate PDF for code analysis results
