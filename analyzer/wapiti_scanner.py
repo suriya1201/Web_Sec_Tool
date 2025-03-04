@@ -102,7 +102,7 @@ def generate_pdf_report(wapiti_results):
                     wrapped_text = "References:"
                     y_position = _draw_text(c, wrapped_text, y_position, width)
                     for ref_title, ref_url in references.items():
-                        wrapped_text = f"- {ref_title}: {ref_url}"
+                        wrapped_text = f"- <a href='{ref_url}'>{ref_title}</a>"
                         y_position = _draw_text(c, wrapped_text, y_position, width)
 
             # Divider line
@@ -119,15 +119,28 @@ def generate_pdf_report(wapiti_results):
     c.save()
 
 
-def _draw_text(canvas, text, y_position, page_width):
+def _draw_text(canvas, text, y_position, page_width, margin=100):
     """Helper function to handle line wrapping and drawing text."""
-    lines = text.split("\n")
-    for line in lines:
-        if y_position < 50:  # Avoid writing too low
-            canvas.showPage()
-            y_position = letter[1] - 50
-        canvas.drawString(100, y_position, line)
-        y_position -= 14  # Move down by 14px for the next line
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import Paragraph
+    from reportlab.lib.styles import getSampleStyleSheet
+
+    styles = getSampleStyleSheet()
+    style = styles["Normal"]
+    style.wordWrap = 'CJK'  # Enable word wrapping
+
+    # Create a Paragraph object
+    paragraph = Paragraph(text, style)
+    _, height = paragraph.wrap(page_width - 2 * margin, y_position)
+
+    if y_position - height < 50:  # Avoid writing too low
+        canvas.showPage()
+        y_position = letter[1] - 50
+        canvas.setFont("Helvetica", 12)  # Reset font after new page
+
+    paragraph.drawOn(canvas, margin, y_position - height)
+    y_position -= height + 14  # Move down by the height of the paragraph plus some padding
+
     return y_position
 
 

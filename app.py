@@ -258,7 +258,7 @@ if st.session_state.scan_completed and st.session_state.scan_results_pdf:
     st.write(f"**Scanners Used:** {', '.join(st.session_state.selected_scanners)}")
 
     # Display individual scanner outputs with download buttons
-    st.header("Scan Results by Tool")
+    st.header("Download Scan Results by Tool :")
 
     for scanner in st.session_state.get(
         "selected_scanners", []
