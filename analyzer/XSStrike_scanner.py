@@ -13,7 +13,7 @@ import re
 
 def generate_pdf_report(target_url, scan_scope, results):
     """Generates a PDF report for XSStrike scan results."""
-    pdf_path = "scans/XSStrike_scan_report.pdf"
+    pdf_path = "scans/xsstrike_scan_report.pdf"
 
     # Ensure the "scans" directory exists
     if not os.path.exists("scans"):
