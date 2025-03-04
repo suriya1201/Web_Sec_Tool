@@ -150,8 +150,8 @@ with tabs[1]:
     # Add a multiselect dropdown for scanners
     selected_scanners = st.multiselect(
         "Options",
-        ["OWASP ZAP", "Wapiti", "SQLMap", "XSStrike", "COMMIX", "SSTImap"],
-        default=["OWASP ZAP", "Wapiti"],
+        ["ZAP", "Wapiti", "SQLMap", "XSStrike", "COMMIX", "SSTImap"],
+        default=["ZAP", "Wapiti"],
     )
 
     # Center the "Start Scan" button and make it fill the space
@@ -180,7 +180,7 @@ def run_scan(target_url, scan_depth, selected_scanners):
         else:
             report_manager = ReportManager("./scans/consolidated_scan_results.pdf")
 
-            if "OWASP ZAP" in selected_scanners:
+            if "ZAP" in selected_scanners:
                 st.header("OWASP ZAP Scan:")
                 st.write(f"Scanning URL: {target_url} with depth: {scan_depth}")
                 scan_url(report_manager, target_url, scan_depth)
@@ -272,9 +272,9 @@ if st.session_state.scan_completed and st.session_state.scan_results_pdf:
 
             # Add a download button
             st.download_button(
-                label="📥 Download Commix Scan Report (PDF)",
+                label=f"📥 Download {scanner} Scan Report (PDF)",
                 data=pdf_data,
-                file_name=f"{scanner.lower()}_scan_results.pdf",
+                file_name=f"{scanner.lower()}_scan_report.pdf",
                 mime="application/pdf",
             )
 

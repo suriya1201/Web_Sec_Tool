@@ -207,7 +207,7 @@ def scan_url(report_manager, target, scan_depth=1):
             st.write(alert_message)
             file.write(alert_message)
 
-    generate_pdf_report(alerts, "scans/zap_scan_results.pdf")
-    report_manager.append_to_pdf("./scans/zap_scan_results.pdf")
+    generate_pdf_report(alerts, "scans/zap_scan_report.pdf")
+    report_manager.append_to_pdf("./scans/zap_scan_report.pdf")
 
     st.success("Scanning completed. Results saved to consolidated_scan_results.pdf.")
