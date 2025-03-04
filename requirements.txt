@@ -72,3 +72,4 @@ reportlab
 pypdf2
 google-generativeai
 fpdf
+pandas
