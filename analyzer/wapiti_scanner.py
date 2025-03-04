@@ -1,12 +1,11 @@
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.pdfgen import canvas
 import os
 import json
 import time
 import subprocess
 import streamlit as st
 from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from PyPDF2 import PdfReader, PdfWriter
@@ -33,8 +32,9 @@ def generate_pdf_report(wapiti_results):
 
     y_position = height - 80  # Initial Y position
 
-    # Extract vulnerabilities and print them in a structured way
+    # Extract vulnerabilities and classifications
     vulnerabilities = wapiti_results.get("vulnerabilities", {})
+    classifications = wapiti_results.get("classifications", {})
 
     for vuln_type, vuln_list in vulnerabilities.items():
         if not vuln_list:  # Skip empty vulnerability types
@@ -84,6 +84,26 @@ def generate_pdf_report(wapiti_results):
             # CURL Command
             wrapped_text = f"CURL Command: {vuln.get('curl_command', 'N/A')}"
             y_position = _draw_text(c, wrapped_text, y_position, width)
+
+            # Classification details
+            classification = classifications.get(vuln_type, {})
+            if classification:
+                # Description
+                wrapped_text = f"Description: {classification.get('desc', 'N/A')}"
+                y_position = _draw_text(c, wrapped_text, y_position, width)
+
+                # Solution
+                wrapped_text = f"Solution: {classification.get('sol', 'N/A')}"
+                y_position = _draw_text(c, wrapped_text, y_position, width)
+
+                # References
+                references = classification.get("ref", {})
+                if references:
+                    wrapped_text = "References:"
+                    y_position = _draw_text(c, wrapped_text, y_position, width)
+                    for ref_title, ref_url in references.items():
+                        wrapped_text = f"- {ref_title}: {ref_url}"
+                        y_position = _draw_text(c, wrapped_text, y_position, width)
 
             # Divider line
             c.setFont("Helvetica", 10)
@@ -213,8 +233,9 @@ def run_wapiti(report_manager, target_url, scan_depth=1):
             st.error(f"Invalid JSON in Wapiti results: {json_err}")
             return None
 
-        # Extract the vulnerabilities section
+        # Extract the vulnerabilities and classifications sections
         vulnerabilities = wapiti_results.get("vulnerabilities", {})
+        classifications = wapiti_results.get("classifications", {})
 
         # Filter out empty vulnerabilities
         filtered_vulnerabilities = {k: v for k, v in vulnerabilities.items() if v}
@@ -239,6 +260,16 @@ def run_wapiti(report_manager, target_url, scan_depth=1):
                     st.code(vuln.get("http_request", "N/A"))
                     st.markdown(f"**CURL Command:**")
                     st.code(vuln.get("curl_command", "N/A"))
+
+                    # Display classification details
+                    classification = classifications.get(vuln_type, {})
+                    if classification:
+                        st.markdown(f"**Description:** {classification.get('desc', 'N/A')}")
+                        st.markdown(f"**Solution:** {classification.get('sol', 'N/A')}")
+                        st.markdown(f"**References:**")
+                        for ref_title, ref_url in classification.get("ref", {}).items():
+                            st.markdown(f"- [{ref_title}]({ref_url})")
+
                     st.markdown("---")
 
         # Generate and append PDF report only if we have valid results
