@@ -132,7 +132,6 @@ class CodeAnalyzer:
 
         return report
 
-    @lru_cache(maxsize=100)
     async def _get_analysis_with_retry(self, prompt: str, max_retries: int = 3) -> Dict[str, Any]:
         """
         Get AI analysis with retry logic and caching

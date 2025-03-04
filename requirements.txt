@@ -70,3 +70,5 @@ mechanize
 html5lib
 reportlab
 pypdf2
+google-generativeai
+fpdf

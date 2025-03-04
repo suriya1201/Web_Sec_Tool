@@ -3,6 +3,7 @@ import httpx
 import asyncio
 from models.vulnerability import VulnerabilityReport
 from utils.latex_generator import LatexGenerator  # Keep for now
+from utils.pdf_generator import PDFGenerator  # Add this import
 import os
 from datetime import datetime
 from analyzer.zap_scanner import scan_url
@@ -37,6 +38,13 @@ if "scan_results" not in st.session_state:
     st.session_state.scan_results = None
 if "scan_results_pdf" not in st.session_state:
     st.session_state.scan_results_pdf = None
+# Add session state for code analysis
+if "analysis_completed" not in st.session_state:
+    st.session_state.analysis_completed = False
+if "analysis_results" not in st.session_state:
+    st.session_state.analysis_results = None
+if "analysis_results_pdf" not in st.session_state:
+    st.session_state.analysis_results_pdf = None
 
 # --- UI Setup ---
 st.set_page_config(page_title="INSPECTIFY", layout="wide")
@@ -370,12 +378,31 @@ async def analyze_repo(repo_url, branch, scan_depth):
             print("--- Finishing analyze_repo (Streamlit) ---")
 
 
+# Function to generate PDF for code analysis results
+def generate_code_analysis_pdf(report):
+    # Ensure the analysis directory exists
+    os.makedirs("analysis", exist_ok=True)
+    
+    # Generate the PDF report
+    pdf_generator = PDFGenerator("analysis/code_analysis_report.pdf")
+    pdf_generator.generate_report(report)
+    
+    # Read and return the PDF content
+    with open("analysis/code_analysis_report.pdf", "rb") as file:
+        return file.read()
+
+
 # --- Main Analysis Execution ---
 if analyze_button:
     if input_type == "Upload Code File" and uploaded_files:
         with st.spinner("Analyzing code..."):
             report = asyncio.run(analyze_code_file(uploaded_files))
             if report:
+                # Generate PDF report and store in session state
+                st.session_state.analysis_results = report
+                st.session_state.analysis_results_pdf = generate_code_analysis_pdf(report)
+                st.session_state.analysis_completed = True
+                
                 # --- Display Results Directly on the Page ---
                 st.header("Vulnerability Report")
                 st.subheader("Summary")
@@ -394,6 +421,15 @@ if analyze_button:
                         if report.risk_score is not None
                         else "N/A"
                     ),
+                )
+                
+                # Add download button for the analysis report
+                st.download_button(
+                    label="📥 Download Code Analysis Report (PDF)",
+                    data=st.session_state.analysis_results_pdf,
+                    file_name="code_analysis_report.pdf",
+                    mime="application/pdf",
+                    key="analysis_download_button"
                 )
 
                 st.subheader("Detailed Vulnerabilities")
@@ -449,6 +485,11 @@ if analyze_button:
             with st.spinner("Analyzing repository..."):
                 report = asyncio.run(analyze_repo(repo_url, branch, scan_depth))
                 if report:
+                    # Generate PDF report and store in session state
+                    st.session_state.analysis_results = report
+                    st.session_state.analysis_results_pdf = generate_code_analysis_pdf(report)
+                    st.session_state.analysis_completed = True
+                    
                     # --- Display Results Directly on the Page ---
                     st.header("Vulnerability Report")
                     st.subheader("Summary")
@@ -467,6 +508,15 @@ if analyze_button:
                             if report.risk_score is not None
                             else "N/A"
                         ),
+                    )
+                    
+                    # Add download button for the analysis report
+                    st.download_button(
+                        label="📥 Download Code Analysis Report (PDF)",
+                        data=st.session_state.analysis_results_pdf,
+                        file_name="code_analysis_report.pdf",
+                        mime="application/pdf",
+                        key="analysis_download_button"
                     )
 
                     st.subheader("Detailed Vulnerabilities")
