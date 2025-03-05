@@ -9,9 +9,21 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from PyPDF2 import PdfReader, PdfWriter
 import re
+import openai  # Import OpenAI library
+from dotenv import load_dotenv  # Import load_dotenv
 
+load_dotenv()  # Load environment variables from .env file
+api_key = os.getenv("OPENAI_API_KEY")  # Get OpenAI API key
 
-def generate_pdf_report(target_url, scan_scope, results):
+# Print the API key to verify it is loaded correctly
+print(f"Loaded OpenAI API Key: {api_key}")
+
+if api_key is None:
+    raise ValueError("API key not found. Please check your .env file.")
+
+client = openai.OpenAI(api_key=api_key)  # Set API key
+
+def generate_pdf_report(target_url, scan_scope, results, summary):
     """Generates a PDF report for XSStrike scan results."""
     pdf_path = "scans/xsstrike_scan_report.pdf"
 
@@ -43,9 +55,15 @@ def generate_pdf_report(target_url, scan_scope, results):
     c.setFont("Helvetica", 10)
     y_position = _draw_text(c, results, y_position, page_width)
 
+    # AI Summary
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(100, y_position - 20, "AI Summary:")
+    y_position -= 40
+    c.setFont("Helvetica", 10)
+    y_position = _draw_text(c, summary, y_position, page_width)
+
     # Save the PDF
     c.save()
-
 
 def _draw_text(c, text, y_position, page_width):
     """Helper function to handle line wrapping and drawing text."""
@@ -75,12 +93,42 @@ def _draw_text(c, text, y_position, page_width):
             y_position -= 14  # Move down for the next line
     return y_position
 
-
 def remove_ansi_escape_sequences(text):
     """Remove ANSI escape sequences from the text."""
     ansi_escape = re.compile(r"(?:\x1B[@-_]|[\x80-\x9F][0-?]*[ -/]*[@-~])")
     return ansi_escape.sub("", text)
 
+def get_ai_summary(text):
+    """Get AI summary with OpenAI API, handling rate limits."""
+    prompt = f"""
+    Summarize the following XSStrike scan results in a structured report format. Include the following details:
+    - The target URL tested
+    - The types of XSS vulnerabilities detected
+    - Any additional information about the vulnerabilities
+
+    XSStrike Scan Results:
+    {text}
+    
+    Provide the summary in this structured format:
+
+    The XSStrike tool was used to test for XSS vulnerabilities on **[Target URL]**. 
+    The detected XSS vulnerabilities included:
+    - **[Vulnerability 1]**
+    - **[Vulnerability 2]**
+    - **[Vulnerability 3]**
+    
+    Additional information:
+    - **[Additional Info 1]**
+    - **[Additional Info 2]**
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=1500
+    )
+    return response.choices[0].message.content.strip()
 
 def run_XSStrike(report_manager, target_url, scan_depth=1):
     """Runs XSStrike to test for Cross-Site Scripting (XSS) vulnerabilities and logs results."""
@@ -105,7 +153,13 @@ def run_XSStrike(report_manager, target_url, scan_depth=1):
         clean_output = remove_ansi_escape_sequences(result.stdout)
         st.write("XSStrike scan completed. Results:")
         st.text(clean_output)
-        generate_pdf_report(target_url, scan_depth, clean_output)
+
+        # Get AI summary
+        summary = get_ai_summary(clean_output)
+        st.header("AI Summary:")
+        st.markdown(summary)  # Use st.markdown to render the summary with Markdown formatting
+
+        generate_pdf_report(target_url, scan_depth, clean_output, summary)
         report_manager.append_to_pdf("./scans/XSStrike_scan_report.pdf")
 
     except subprocess.CalledProcessError as e:
@@ -113,5 +167,5 @@ def run_XSStrike(report_manager, target_url, scan_depth=1):
         st.text(e.stdout)
         st.text(e.stderr)
 
-        generate_pdf_report(target_url, scan_depth, e.stdout)
+        generate_pdf_report(target_url, scan_depth, e.stdout, "")
         report_manager.append_to_pdf("./scans/XSStrike_scan_report.pdf")
