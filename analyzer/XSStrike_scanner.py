@@ -64,30 +64,70 @@ def generate_pdf_report(target_url, scan_scope, results, summary):
     c.save()
 
 def _draw_text(c, text, y_position, page_width):
-    """Helper function to handle line wrapping and drawing text."""
+    """Helper function to handle line wrapping and drawing text with bold words."""
     lines = text.split("\n")
+    max_width = page_width - 150  # Adjust margin
+    
     for line in lines:
-        # Split line if it's wider than the page width
         while len(line) > 0:
             if y_position < 50:  # Avoid writing too low
                 c.showPage()
                 y_position = letter[1] - 50  # Reset y_position for the new page
                 c.setFont("Helvetica", 10)  # Reapply font on new page
-
-            # Break the line if it's too long for the page width
-            if c.stringWidth(line, "Helvetica", 10) > page_width - 200:
-                split_index = len(line)  # Assume we print all
-                while (
-                    c.stringWidth(line[:split_index], "Helvetica", 10)
-                    > page_width - 200
-                ):
-                    split_index -= 1
-                c.drawString(100, y_position, line[:split_index])
-                line = line[split_index:]  # Remaining text
+            
+            bold_pattern = re.compile(r'\*\*(.*?)\*\*')
+            matches = list(bold_pattern.finditer(line))
+            
+            x_position = 100
+            last_end = 0
+            wrapped_line = ""
+            
+            if matches:
+                for match in matches:
+                    start, end = match.span()
+                    
+                    # Draw text before the bold word
+                    normal_text = line[last_end:start]
+                    if normal_text.strip():
+                        c.setFont("Helvetica", 10)
+                        if x_position + c.stringWidth(normal_text, "Helvetica", 10) > max_width:
+                            y_position -= 14
+                            x_position = 100
+                        c.drawString(x_position, y_position, normal_text)
+                        x_position += c.stringWidth(normal_text, "Helvetica", 10)
+                    
+                    # Draw the bold word
+                    bold_text = match.group(1)
+                    c.setFont("Helvetica-Bold", 10)
+                    if x_position + c.stringWidth(bold_text, "Helvetica-Bold", 10) > max_width:
+                        y_position -= 14
+                        x_position = 100
+                    c.drawString(x_position, y_position, bold_text)
+                    x_position += c.stringWidth(bold_text, "Helvetica-Bold", 10)
+                    
+                    last_end = end
+                
+                # Draw any remaining text after the last bold word
+                remaining_text = line[last_end:]
+                if remaining_text.strip():
+                    c.setFont("Helvetica", 10)
+                    if x_position + c.stringWidth(remaining_text, "Helvetica", 10) > max_width:
+                        y_position -= 14
+                        x_position = 100
+                    c.drawString(x_position, y_position, remaining_text)
             else:
-                c.drawString(100, y_position, line)
-                line = ""
-
+                # No bold words, handle normal text wrapping
+                c.setFont("Helvetica", 10)
+                words = line.split(" ")
+                for word in words:
+                    word_width = c.stringWidth(word + " ", "Helvetica", 10)
+                    if x_position + word_width > max_width:
+                        y_position -= 14
+                        x_position = 100
+                    c.drawString(x_position, y_position, word + " ")
+                    x_position += word_width
+            
+            line = ""
             y_position -= 14  # Move down for the next line
     return y_position
 
