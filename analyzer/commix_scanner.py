@@ -14,9 +14,6 @@ from dotenv import load_dotenv  # Import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 api_key = os.getenv("OPENAI_API_KEY")  # Get OpenAI API key
 
-# Print the API key to verify it is loaded correctly
-print(f"Loaded OpenAI API Key: {api_key}")
-
 if api_key is None:
     raise ValueError("API key not found. Please check your .env file.")
 
