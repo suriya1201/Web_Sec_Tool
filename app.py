@@ -197,7 +197,6 @@ def run_scan(target_url, scan_depth, selected_scanners):
             if "Wapiti" in selected_scanners:
                 st.header("Wapiti Scan:")
                 run_wapiti(report_manager, target_url, scan_depth)
-                st.markdown("---")
             if "SQLMap" in selected_scanners:
                 st.header("SQLMap Scan:")
                 run_sqlmap(report_manager, target_url, scan_depth)
