@@ -203,7 +203,7 @@ def run_scan(target_url, scan_depth, selected_scanners):
                 st.markdown("---")
             if "XSStrike" in selected_scanners:
                 st.header("XSStrike Scan:")
-                run_XSStrike(report_manager, target_url, scan_depth)
+                run_xsstrike(report_manager, target_url, scan_depth)
                 st.markdown("---")
             if "COMMIX" in selected_scanners:
                 st.header("COMMIX Scan:")
