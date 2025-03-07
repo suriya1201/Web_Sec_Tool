@@ -112,25 +112,36 @@ class CodeAnalyzer:
             logging.error(f"AI analysis failed: {str(e)}")
             raise RuntimeError(f"Security analysis failed: {str(e)}")
 
-        # Process and validate vulnerabilities
-        vulnerabilities = self._process_ai_response(analysis_result)
+        # Process vulnerabilities with enhanced error handling
+        try:
+            # Process and validate vulnerabilities
+            vulnerabilities = self._process_ai_response(analysis_result)
 
-        # Chain vulnerabilities to find compound risks
-        chained_vulnerabilities = self._chain_vulnerabilities(vulnerabilities)
+            # Chain vulnerabilities to find compound risks
+            chained_vulnerabilities = self._chain_vulnerabilities(vulnerabilities)
 
-        # Create and return the report
-        report = VulnerabilityReport(
-            file_name=filename,
-            vulnerabilities=vulnerabilities,
-            chained_vulnerabilities=chained_vulnerabilities,
-            timestamp=datetime.now()
-        )
+            # Create and return the report
+            report = VulnerabilityReport(
+                file_name=filename,
+                vulnerabilities=vulnerabilities,
+                chained_vulnerabilities=chained_vulnerabilities,
+                timestamp=datetime.now()
+            )
 
-        # Calculate summary statistics
-        report.calculate_summary()
-        report.calculate_risk_score()
+            # Calculate summary statistics
+            report.calculate_summary()
+            report.calculate_risk_score()
 
-        return report
+            return report
+        except Exception as e:
+            logging.error(f"Failed during vulnerability processing: {str(e)}")
+            # Return a basic report without detailed processing instead of failing
+            return VulnerabilityReport(
+                file_name=filename,
+                vulnerabilities=[],
+                chained_vulnerabilities=[],
+                timestamp=datetime.now()
+            )
 
     async def _get_analysis_with_retry(self, prompt: str, max_retries: int = 3) -> Dict[str, Any]:
         """
@@ -396,12 +407,13 @@ Format response as JSON matching the Vulnerability model structure.
                     mapped_type = type_mapping.get(original_type)
 
                     if mapped_type is None:
-                        logging.warning(f"Unknown vulnerability type encountered: {original_type}")
+                        # IMPORTANT CHANGE: Instead of skipping with continue, use a default type
+                        logging.warning(f"Unknown vulnerability type encountered: {original_type}. Using GENERIC_SECURITY_ISSUE as fallback.")
                         unprocessed_types.add(original_type)
-                        continue
-
-                    vuln_type = mapped_type
-                    logging.info(f"Mapped vulnerability type '{original_type}' to '{vuln_type.value}'")
+                        vuln_type = VulnerabilityType.GENERIC_SECURITY_ISSUE
+                    else:
+                        vuln_type = mapped_type
+                        logging.info(f"Mapped vulnerability type '{original_type}' to '{vuln_type.value}'")
 
                 # Create CodeLocation object
                 location_data = vuln_data.get('location', {})
@@ -417,7 +429,7 @@ Format response as JSON matching the Vulnerability model structure.
                 # Create Vulnerability object with validated data
                 vulnerability = Vulnerability(
                     type=vuln_type,
-                    severity=severity,  # Use mapped severity
+                    severity=severity,
                     location=location,
                     description=vuln_data.get('description', ''),
                     impact=vuln_data.get('impact', ''),

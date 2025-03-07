@@ -293,7 +293,7 @@ if st.session_state.scan_completed and st.session_state.scan_results_pdf:
 # --- Analysis Logic (using httpx for requests to FastAPI) ---
 async def analyze_code_file(files):
     print("--- Starting analyze_code_file (Streamlit) ---")
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=180.0) as client:
         files_data = []
         for file in files:
             print(f"  Processing file: {file.name}")
