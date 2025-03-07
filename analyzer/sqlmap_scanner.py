@@ -12,7 +12,7 @@ import re
 from dotenv import load_dotenv  # Import load_dotenv
 
 # Import the AI summary module
-from ai_summary_module import get_ai_summary
+from utils.ai_summary_module import get_ai_summary
 
 load_dotenv()  # Load environment variables from .env file
 
