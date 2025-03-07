@@ -11,7 +11,7 @@ from analyzer.wapiti_scanner import run_wapiti
 from analyzer.sqlmap_scanner import run_sqlmap
 from analyzer.commix_scanner import run_commix
 from analyzer.sstimap_scanner import run_sstimap
-from analyzer.XSStrike_scanner import run_XSStrike
+from analyzer.XSStrike_scanner import run_xsstrike
 from report_manager import ReportManager
 from zapv2 import ZAPv2
 from analyzer.broken_access_scanner import run_broken_access_scan
