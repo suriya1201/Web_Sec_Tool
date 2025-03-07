@@ -8,17 +8,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from PyPDF2 import PdfReader, PdfWriter
-import openai  # Import OpenAI library
-from dotenv import load_dotenv  # Import load_dotenv
 import re 
+from dotenv import load_dotenv  # Import load_dotenv
+
+# Import the AI summary module
+from ai_summary_module import get_ai_summary
 
 load_dotenv()  # Load environment variables from .env file
-api_key = os.getenv("OPENAI_API_KEY")  # Get OpenAI API key
 
-if api_key is None:
-    raise ValueError("API key not found. Please check your .env file.")
-
-client = openai.OpenAI(api_key=api_key)  # Set API key
 def generate_pdf_report(target_url, scan_scope, results, summary):
     pdf_path = "scans/commix_scan_report.pdf"
 
@@ -128,9 +125,9 @@ def _draw_text(c, text, y_position, page_width):
             y_position -= 14  # Move down for the next line
     return y_position
 
-def get_ai_summary(text):
-    """Get AI summary with OpenAI API, handling rate limits."""
-    prompt = f"""
+def get_commix_summary(text, model=None):
+    """Get AI summary using our AI summary module."""
+    summary_prompt = """
     Summarize the following Commix scan results in a structured report format. Include the following details:
     - The target URL tested
     - The types of command injection vulnerabilities detected
@@ -151,16 +148,9 @@ def get_ai_summary(text):
     - **[Additional Info 1]**
     - **[Additional Info 2]**
     """
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=1500
-    )
-    return response.choices[0].message.content.strip()
+    return get_ai_summary(text, summary_prompt, model)
 
-def run_commix(report_manager, target_url, scan_depth=1):
+def run_commix(report_manager, target_url, scan_depth=1, ai_model=None):
     """Runs commix for command injection testing and logs results."""
     st.write(f"Running commix on {target_url} with depth: {scan_depth}...")
 
@@ -179,8 +169,8 @@ def run_commix(report_manager, target_url, scan_depth=1):
         st.write("Commix scan completed. Results:")
         st.text(result.stdout)
 
-        # Get AI summary
-        summary = get_ai_summary(result.stdout)
+        # Get AI summary using specified model or default behavior
+        summary = get_commix_summary(result.stdout, ai_model)
         st.header("AI Summary:")
         st.markdown(summary)  # Use st.markdown to render the summary with Markdown formatting
 

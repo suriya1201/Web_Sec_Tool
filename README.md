@@ -5,7 +5,7 @@
 
 1. Create venv in folder ```python -m venv venv```
 2. Activate venv ```call venv/Scripts/activate.bat```
-3. Install modules ```pip install -r requirements.txt```
+3. Install modules ```pip install -U -r requirements.txt```
 4. Create .env file with the contents:
 ```
 GEMINI_API_KEY=your_gemini_key
