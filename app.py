@@ -245,23 +245,6 @@ if "scan_button" in locals() and scan_button:
     else:
         st.error("Please enter a URL to scan.")
 
-# # Display download button if scan completed
-# if st.session_state.scan_completed and st.session_state.scan_results_pdf:
-#     st.download_button(
-#         label="📥 Download Consolidated Scan Results (PDF)",
-#         data=st.session_state.scan_results_pdf,
-#         file_name="consolidated_scan_results.pdf",
-#         mime="application/pdf",
-#         key="download_button",
-#     )
-
-
-#     # Display scan information
-#     st.success("Scan completed successfully!")
-#     st.write(f"**Target URL:** {st.session_state.target_url}")
-#     st.write(f"**Scan Depth:** {st.session_state.scan_depth}")
-#     st.write(f"**Scanners Used:** {', '.join(st.session_state.selected_scanners)}")
-
 # Display scan information
 if st.session_state.scan_completed and st.session_state.scan_results_pdf:
     st.success("Scan completed successfully!")
@@ -441,85 +424,11 @@ if analyze_button:
         with st.spinner("Analyzing code..."):
             report = asyncio.run(analyze_code_file(uploaded_files))
             if report:
-                # Generate PDF report and store in session state
+                # Store results in session state but DON'T display them here
                 st.session_state.analysis_results = report
                 st.session_state.analysis_results_pdf = generate_code_analysis_pdf(report)
                 st.session_state.analysis_completed = True
-                
-                # --- Display Results Directly on the Page ---
-                st.header("Vulnerability Report")
-                st.subheader("Summary")
-                if report.summary:
-                    col1, col2, col3, col4, col5, col6 = st.columns(6)
-                    col1.metric("Total", report.summary["total"])
-                    col2.metric("Critical", report.summary["critical"])
-                    col3.metric("High", report.summary["high"])
-                    col4.metric("Medium", report.summary["medium"])
-                    col5.metric("Low", report.summary["low"])
-                    col6.metric("Info", report.summary["info"])
-                st.metric(
-                    "Risk Score",
-                    (
-                        f"{report.risk_score:.2f}"
-                        if report.risk_score is not None
-                        else "N/A"
-                    ),
-                )
-                
-                # Add download button for the analysis report
-                st.download_button(
-                    label="📥 Download Code Analysis Report (PDF)",
-                    data=st.session_state.analysis_results_pdf,
-                    file_name="code_analysis_report.pdf",
-                    mime="application/pdf",
-                    key="analysis_download_button"
-                )
-
-                st.subheader("Detailed Vulnerabilities")
-                for vuln in report.vulnerabilities:
-                    with st.expander(
-                        f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"
-                    ):
-                        st.write(f"**Description:** {vuln.description}")
-                        st.write(f"**Impact:** {vuln.impact}")
-                        st.write(f"**Remediation:** {vuln.remediation}")
-                        st.write(
-                            f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)"
-                        )
-                        st.write(f"**OWASP Category:** {vuln.owasp_category}")
-                        st.write(f"**CVSS Score:** {vuln.cvss_score}")
-                        if vuln.references:
-                            st.write("**References:**")
-                            for ref in vuln.references:
-                                st.write(f"- [{ref}]({ref})")
-
-                        if vuln.proof_of_concept:
-                            st.write("**Proof of Concept:**")  # Just write the heading
-                            st.code(
-                                vuln.proof_of_concept, language="python"
-                            )  # Display the code
-
-                        if vuln.secure_code_example:
-                            st.write(
-                                "**Secure Code Example:**"
-                            )  # Just write the heading
-                            st.code(
-                                vuln.secure_code_example, language="python"
-                            )  # Display the code
-
-                st.subheader("Chained Vulnerabilities")
-                for chain in report.chained_vulnerabilities:
-                    with st.expander(
-                        f"Chain - Combined Severity: {chain.combined_severity}"
-                    ):
-                        st.write(f"**Attack Path:** {chain.attack_path}")
-                        st.write(f"**Likelihood:** {chain.likelihood}")
-                        st.write("**Prerequisites:**")
-                        for prereq in chain.prerequisites:
-                            st.write(f"- {prereq}")
-                        st.write(
-                            f"**Mitigation Priority:** {chain.mitigation_priority}"
-                        )
+                st.success("Analysis completed successfully!")
 
     elif input_type == "Provide Repository URL" and repo_url:
         if not is_valid_repo_url(repo_url):
@@ -528,86 +437,87 @@ if analyze_button:
             with st.spinner("Analyzing repository..."):
                 report = asyncio.run(analyze_repo(repo_url, branch, scan_depth))
                 if report:
-                    # Generate PDF report and store in session state
+                    # Store results in session state but DON'T display them here
                     st.session_state.analysis_results = report
                     st.session_state.analysis_results_pdf = generate_code_analysis_pdf(report)
                     st.session_state.analysis_completed = True
-                    
-                    # --- Display Results Directly on the Page ---
-                    st.header("Vulnerability Report")
-                    st.subheader("Summary")
-                    if report.summary:
-                        col1, col2, col3, col4, col5, col6 = st.columns(6)
-                        col1.metric("Total", report.summary["total"])
-                        col2.metric("Critical", report.summary["critical"])
-                        col3.metric("High", report.summary["high"])
-                        col4.metric("Medium", report.summary["medium"])
-                        col5.metric("Low", report.summary["low"])
-                        col6.metric("Info", report.summary["info"])
-                    st.metric(
-                        "Risk Score",
-                        (
-                            f"{report.risk_score:.2f}"
-                            if report.risk_score is not None
-                            else "N/A"
-                        ),
-                    )
-                    
-                    # Add download button for the analysis report
-                    st.download_button(
-                        label="📥 Download Code Analysis Report (PDF)",
-                        data=st.session_state.analysis_results_pdf,
-                        file_name="code_analysis_report.pdf",
-                        mime="application/pdf",
-                        key="analysis_download_button"
-                    )
-
-                    st.subheader("Detailed Vulnerabilities")
-                    for vuln in report.vulnerabilities:
-                        with st.expander(
-                            f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"
-                        ):
-                            st.write(f"**Description:** {vuln.description}")
-                            st.write(f"**Impact:** {vuln.impact}")
-                            st.write(f"**Remediation:** {vuln.remediation}")
-                            st.write(
-                                f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)"
-                            )
-                            st.write(f"**OWASP Category:** {vuln.owasp_category}")
-                            st.write(f"**CVSS Score:** {vuln.cvss_score}")
-                            if vuln.references:
-                                st.write("**References:**")
-                                for ref in vuln.references:
-                                    st.write(f"- [{ref}]({ref})")
-                            if vuln.proof_of_concept:
-                                st.write(
-                                    "**Proof of Concept:**"
-                                )  # Just write the heading
-                                st.code(
-                                    vuln.proof_of_concept, language="python"
-                                )  # Display the code
-
-                            if vuln.secure_code_example:
-                                st.write(
-                                    "**Secure Code Example:**"
-                                )  # Just write the heading
-                                st.code(
-                                    vuln.secure_code_example, language="python"
-                                )  # Display the code
-
-                    st.subheader("Chained Vulnerabilities")
-                    for chain in report.chained_vulnerabilities:
-                        with st.expander(
-                            f"Chain - Combined Severity: {chain.combined_severity}"
-                        ):
-                            st.write(f"**Attack Path:** {chain.attack_path}")
-                            st.write(f"**Likelihood:** {chain.likelihood}")
-                            st.write("**Prerequisites:**")
-                            for prereq in chain.prerequisites:
-                                st.write(f"- {prereq}")
-                            st.write(
-                                f"**Mitigation Priority:** {chain.mitigation_priority}"
-                            )
+                    st.success("Analysis completed successfully!")
 
     else:
         st.error("Please provide either a code file or a repository URL.")
+
+# --- Display Code Analysis Results (if they exist) ---
+# This section is OUTSIDE the analyze_button conditional
+if st.session_state.analysis_completed and st.session_state.analysis_results:
+    report = st.session_state.analysis_results
+    
+    # --- Display Results Directly on the Page ---
+    st.header("Vulnerability Report")
+    st.subheader("Summary")
+    if report.summary:
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        col1.metric("Total", report.summary["total"])
+        col2.metric("Critical", report.summary["critical"])
+        col3.metric("High", report.summary["high"])
+        col4.metric("Medium", report.summary["medium"])
+        col5.metric("Low", report.summary["low"])
+        col6.metric("Info", report.summary["info"])
+    st.metric(
+        "Risk Score",
+        (
+            f"{report.risk_score:.2f}"
+            if report.risk_score is not None
+            else "N/A"
+        ),
+    )
+    
+    # Add download button for the analysis report
+    if st.session_state.analysis_results_pdf is not None:
+        try:
+            st.download_button(
+                label="📥 Download Code Analysis Report (PDF)",
+                data=st.session_state.analysis_results_pdf,
+                file_name="code_analysis_report.pdf",
+                mime="application/pdf",
+                key="analysis_download_button"
+            )
+        except Exception as e:
+            st.error(f"Error with download button: {str(e)}")
+
+    st.subheader("Detailed Vulnerabilities")
+    for vuln in report.vulnerabilities:
+        with st.expander(
+            f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"
+        ):
+            st.write(f"**Description:** {vuln.description}")
+            st.write(f"**Impact:** {vuln.impact}")
+            st.write(f"**Remediation:** {vuln.remediation}")
+            st.write(
+                f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)"
+            )
+            st.write(f"**OWASP Category:** {vuln.owasp_category}")
+            st.write(f"**CVSS Score:** {vuln.cvss_score}")
+            if vuln.references:
+                st.write("**References:**")
+                for ref in vuln.references:
+                    st.write(f"- [{ref}]({ref})")
+            if vuln.proof_of_concept:
+                st.write("**Proof of Concept:**")
+                st.code(vuln.proof_of_concept, language="python")
+            if vuln.secure_code_example:
+                st.write("**Secure Code Example:**")
+                st.code(vuln.secure_code_example, language="python")
+
+    st.subheader("Chained Vulnerabilities")
+    for chain in report.chained_vulnerabilities:
+        with st.expander(
+            f"Chain - Combined Severity: {chain.combined_severity}"
+        ):
+            st.write(f"**Attack Path:** {chain.attack_path}")
+            st.write(f"**Likelihood:** {chain.likelihood}")
+            st.write("**Prerequisites:**")
+            for prereq in chain.prerequisites:
+                st.write(f"- {prereq}")
+            st.write(
+                f"**Mitigation Priority:** {chain.mitigation_priority}"
+            )
