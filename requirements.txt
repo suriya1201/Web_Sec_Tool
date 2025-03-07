@@ -61,7 +61,7 @@ urllib3
 uvicorn
 watchdog
 zaproxy
-wapiti3
+wapiti3==3.2.2
 sqlmap
 pyreadline
 defusedxml

@@ -175,3 +175,4 @@ cython_debug/
 zap_scan_results.txt
 
 /analysis
+/scans

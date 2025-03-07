@@ -66,6 +66,8 @@ class AISummaryClient:
             elif model == "anthropic" and self.anthropic_available:
                 return await self._summarize_with_anthropic(scan_results, summary_prompt)
             elif model == "gemini" and self.gemini_available:
+                print("Using Gemini model for summary generation.")
+                print(summary_prompt)
                 return await self._summarize_with_gemini(scan_results, summary_prompt)
             else:
                 # Try models in order: Gemini -> OpenAI -> Anthropic
