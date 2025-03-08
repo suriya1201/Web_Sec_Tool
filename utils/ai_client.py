@@ -228,6 +228,9 @@ Allowed vulnerability types:
 - INSECURE_CONFIGURATION_SETTING
 - INFORMATION_EXPOSURE_THROUGH_ERROR_MESSAGES
 - GENERIC_SECURITY_ISSUE
+
+
+Make sure you do not exceed the maximum token limit of 8192 tokens for the response.
 """
     def _validate_response(self, response: Dict[str, Any]) -> bool:
         """Validate response structure (remains unchanged)."""

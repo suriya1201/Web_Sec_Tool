@@ -24,6 +24,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def clean_display_path(file_path: str) -> str:
+    """
+    Clean file paths for display in the UI by removing temporary directory parts
+    
+    Args:
+        file_path: Original file path
+        
+    Returns:
+        str: Cleaned file path for display
+    """
+    import re
+    
+    if not file_path:
+        return ""
+    
+    # Remove common temp directory patterns
+    path_patterns_to_remove = [
+        r'C:\\Users\\[^\\]+\\AppData\\Local\\Temp\\',
+        r'C:/Users/[^/]+/AppData/Local/Temp/',
+        r'/tmp/',
+        r'\\AppData\\Local\\Temp\\',
+        r'AppData\\Local\\Temp\\'
+    ]
+    
+    cleaned_path = file_path
+    for pattern in path_patterns_to_remove:
+        cleaned_path = re.sub(pattern, '', cleaned_path, flags=re.IGNORECASE)
+    
+    return cleaned_path
+
 class AnalysisRequest(BaseModel):
     repository_url: str
     branch: str = "main"
@@ -80,6 +110,9 @@ async def analyze_repository(request: AnalysisRequest) -> VulnerabilityReport:
             request.branch,
             request.scan_depth
         )
+        # sanitize the file path for display
+        for vuln in report.vulnerabilities:
+            vuln.location.file_path = clean_display_path(vuln.location.file_path)
         report.calculate_summary()  # Make sure summary is calculated
         report.calculate_risk_score()  # Calculate risk score
         return report

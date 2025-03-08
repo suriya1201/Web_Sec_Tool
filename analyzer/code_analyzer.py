@@ -264,7 +264,7 @@ class CodeAnalyzer:
         # Analyze each file
         all_vulnerabilities = []
         for file_path in files_to_analyze:
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             report = await self.analyze_code(content, str(file_path))
             all_vulnerabilities.extend(report.vulnerabilities)
@@ -984,13 +984,15 @@ Format response as JSON matching the Vulnerability model structure.
 
         relevant_files = []
         for root, dirs, files in os.walk(repo_path):
+            # skip .git directory
+            if '.git' in dirs:
+                dirs.remove('.git')
             # Calculate the current depth
             current_depth = root.count(os.sep) - repo_path.count(os.sep)
             if current_depth < scan_depth:
                 for file in files:
                     file_path = os.path.join(root, file)
-                    # Add logic to filter files if needed (e.g., only .py files)
-                    if file.endswith('.py'):  # Example: only analyze Python files
+                    if file_path.endswith(('.py', '.js', '.ts', '.java', '.cpp', '.c', '.cs', '.go', '.rb', '.php', '.rs', '.swift', '.kt', '.scala')):
                         relevant_files.append(file_path)
 
         return relevant_files
