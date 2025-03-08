@@ -74,20 +74,17 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityRepo
 
 @app.post("/analyze/repository", response_model=VulnerabilityReport)
 async def analyze_repository(request: AnalysisRequest) -> VulnerabilityReport:
-    """
-    Analyze a git repository for security vulnerabilities.
-    """
-    print("--- Starting analyze_repository (FastAPI) ---") #Added print statement
     try:
         report = await analyzer.analyze_repository(
             request.repository_url,
             request.branch,
             request.scan_depth
         )
-        print("--- Finishing analyze_repository (FastAPI) ---") #Added print statement
+        report.calculate_summary()  # Make sure summary is calculated
+        report.calculate_risk_score()  # Calculate risk score
         return report
     except Exception as e:
-        print(f"    Error during analysis: {e}") #Added print statement
+        print(f"    Error during analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")

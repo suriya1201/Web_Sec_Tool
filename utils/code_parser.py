@@ -50,7 +50,8 @@ class CodeParser:
             'metadata': self._extract_metadata(content, language),
             'imports': self._extract_imports(content, language),
             'functions': self._extract_functions(content, language),
-            'classes': self._extract_classes(content, language)
+            'classes': self._extract_classes(content, language),
+            'file_name': filename,
         }
 
     def _extract_metadata(self, content: str, language: str) -> Dict[str, Any]:

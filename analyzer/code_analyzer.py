@@ -115,7 +115,7 @@ class CodeAnalyzer:
         # Process vulnerabilities with enhanced error handling
         try:
             # Process and validate vulnerabilities
-            vulnerabilities = self._process_ai_response(analysis_result)
+            vulnerabilities = self._process_ai_response(analysis_result, filename)
 
             # Chain vulnerabilities to find compound risks
             chained_vulnerabilities = self._chain_vulnerabilities(vulnerabilities)
@@ -305,6 +305,7 @@ class CodeAnalyzer:
     - Recommended fixes with secure code example
 
 3. Code Context:
+    - File name: {parsed_code.get('file_name', 'unknown')}
     - Imports: {parsed_code.get('imports', [])}
     - Functions: {[f['name'] for f in parsed_code.get('functions', [])]}
     - Classes: {[c['name'] for c in parsed_code.get('classes', [])]}
@@ -322,7 +323,7 @@ class CodeAnalyzer:
 Format response as JSON matching the Vulnerability model structure.
 """
 
-    def _process_ai_response(self, analysis_result: Dict[str, Any]) -> List[Vulnerability]:
+    def _process_ai_response(self, analysis_result: Dict[str, Any], file_path: str = None) -> List[Vulnerability]:
         """
         Process and validate the AI analysis response into Vulnerability objects.
 
@@ -407,6 +408,12 @@ Format response as JSON matching the Vulnerability model structure.
                     mapped_type = type_mapping.get(original_type)
 
                     if mapped_type is None:
+                        original_type = original_type.replace('-', '_')
+                        # find if any sort of slice of the original type is present in the vulnerability type
+                        mapped_type = next((t for t in VulnerabilityType if t.value in original_type), None)
+
+
+                    if mapped_type is None:
                         # IMPORTANT CHANGE: Instead of skipping with continue, use a default type
                         logging.warning(f"Unknown vulnerability type encountered: {original_type}. Using GENERIC_SECURITY_ISSUE as fallback.")
                         unprocessed_types.add(original_type)
@@ -418,7 +425,7 @@ Format response as JSON matching the Vulnerability model structure.
                 # Create CodeLocation object
                 location_data = vuln_data.get('location', {})
                 location = CodeLocation(
-                    file_path=location_data.get('file_path', ''),
+                    file_path=file_path or location_data.get('file_path', ''),
                     start_line=location_data.get('start_line', 0),
                     end_line=location_data.get('end_line', 0),
                     start_col=location_data.get('start_col', 0),
