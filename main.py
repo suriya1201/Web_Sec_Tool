@@ -77,14 +77,14 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> SecurityAnalysisR
             reports.append(report)
 
         if len(reports) > 1:
-            # Combine reports
+            # Combine reports with corrected field names
             combined_report = SecurityAnalysisReport(
-                timestamp=datetime.now(),  # Use current time for combined report
-                vulnerabilities=[vuln for r in reports for vuln in r.vulnerabilities],
-                chained_vulnerabilities=[chain for r in reports for chain in r.chained_vulnerabilities]
+                generated_at=datetime.now(),  # Use current time for combined report
+                issues=[vuln for r in reports for vuln in r.issues],
+                issue_chains=[chain for r in reports for chain in r.issue_chains]
             )
-            combined_report.calculate_summary()
-            combined_report.calculate_risk_score()
+            combined_report.calculate_stats()  # Corrected method name
+            combined_report.calculate_risk_rating()  # Corrected method name
             print("    Combined report created.")
             return combined_report
         elif reports:
@@ -92,7 +92,11 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> SecurityAnalysisR
             return reports[0]
         else:
             print("    No files to analyze, returning empty report")
-            return SecurityAnalysisReport(timestamp=datetime.now(), vulnerabilities=[], chained_vulnerabilities=[])
+            return SecurityAnalysisReport(
+                generated_at=datetime.now(), 
+                issues=[], 
+                issue_chains=[]
+            )
 
     except Exception as e:
         print(f"    Error during analysis: {e}")
@@ -110,10 +114,10 @@ async def analyze_repository(request: AnalysisRequest) -> SecurityAnalysisReport
             request.scan_depth
         )
         # sanitize the file path for display
-        for vuln in report.vulnerabilities:
-            vuln.location.file_path = clean_display_path(vuln.location.file_path)
-        report.calculate_summary()  # Make sure summary is calculated
-        report.calculate_risk_score()  # Calculate risk score
+        for vuln in report.issues:  # Changed from vulnerabilities to issues
+            vuln.position.file_path = clean_display_path(vuln.position.file_path)  # Changed location to position
+        report.calculate_stats()  # Changed from calculate_summary to calculate_stats
+        report.calculate_risk_rating()  # Changed from calculate_risk_score to calculate_risk_rating
         return report
     except Exception as e:
         print(f"    Error during analysis: {e}")

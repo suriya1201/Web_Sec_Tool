@@ -168,7 +168,6 @@ class CodeInspector:
                 issue_chains=[]
             )
     
-    @lru_cache(maxsize=50)
     async def _get_analysis_with_retries(self, prompt: str, max_retries: int = 3) -> Dict[str, Any]:
         """
         Get AI analysis with retry logic and result caching.
