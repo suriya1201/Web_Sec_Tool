@@ -1,7 +1,7 @@
 # Inspectify
 
 
-## Setup
+## Setup (recommended python version 3.11)
 
 1. Create venv in folder ```python -m venv venv```
 2. Activate venv ```call venv/Scripts/activate.bat```
