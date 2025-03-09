@@ -1,8 +1,7 @@
 import streamlit as st
 import httpx
 import asyncio
-from models.vulnerability import VulnerabilityReport
-from utils.latex_generator import LatexGenerator  # Keep for now
+from models.security_types import SecurityAnalysisReport
 from utils.pdf_generator import PDFGenerator  # Add this import
 import os
 from datetime import datetime
@@ -99,7 +98,7 @@ async def analyze_code_file(files):
             )
             print(f"  Received response. Status: {response.status_code}")
             response.raise_for_status()
-            report = VulnerabilityReport(**response.json())
+            report = SecurityAnalysisReport(**response.json())
             print("  Response parsed successfully.")
             return report
         except httpx.RequestError as e:
@@ -128,7 +127,7 @@ async def analyze_repo(repo_url, branch, scan_depth):
         scan_depth: The depth to scan the repository
         
     Returns:
-        VulnerabilityReport or None: The analysis report or None if an error occurred
+        SecurityAnalysisReport or None: The analysis report or None if an error occurred
     """
     print("--- Starting analyze_repo (Streamlit) ---")
     print(f"  Repository URL: {repo_url}")
@@ -167,7 +166,7 @@ async def analyze_repo(repo_url, branch, scan_depth):
             )
             print(f"  Received response. Status: {response.status_code}")
             response.raise_for_status()
-            report = VulnerabilityReport(**response.json())
+            report = SecurityAnalysisReport(**response.json())
             print("  Response parsed successfully.")
             return report
     except httpx.ConnectError:
@@ -201,9 +200,11 @@ def generate_code_analysis_pdf(report):
     # Ensure the analysis directory exists
     os.makedirs("analysis", exist_ok=True)
     
-    # Generate the PDF report
+    # Generate the PDF report using the new method for the new format
     pdf_generator = PDFGenerator("analysis/code_analysis_report.pdf")
-    pdf_generator.generate_report(report)
+    
+    # Use the new method for the new structure
+    pdf_generator.generate_security_report(report)
     
     # Read and return the PDF content
     with open("analysis/code_analysis_report.pdf", "rb") as file:
@@ -354,75 +355,207 @@ if st.session_state.analysis_completed and st.session_state.analysis_results:
     st.success("Analysis completed successfully!")
     report = st.session_state.analysis_results
     
-    st.header("Vulnerability Report")
+    st.header("Security Analysis Report")
     st.subheader("Summary")
-    if report.summary:
+    
+    # Helper function to safely get data from either format
+    def get_attribute_or_key(obj, name, default=None):
+        if isinstance(obj, dict):
+            return obj.get(name, default)
+        else:
+            return getattr(obj, name, default)
+    
+    # Check for summary or summary_stats (handle both formats)
+    summary_data = None
+    if hasattr(report, 'summary') and report.summary:
+        summary_data = report.summary
+    elif hasattr(report, 'summary_stats') and report.summary_stats:
+        summary_data = report.summary_stats
+    elif isinstance(report, dict) and report.get('summary_stats'):
+        summary_data = report['summary_stats']
+    
+    if summary_data:
         col1, col2, col3, col4, col5, col6 = st.columns(6)
-        col1.metric("Total", report.summary["total"])
-        col2.metric("Critical", report.summary["critical"])
-        col3.metric("High", report.summary["high"])
-        col4.metric("Medium", report.summary["medium"])
-        col5.metric("Low", report.summary["low"])
-        col6.metric("Info", report.summary["info"])
-    st.metric(
-        "Risk Score",
-        (
-            f"{report.risk_score:.2f}"
-            if report.risk_score is not None
-            else "N/A"
-        ),
-    )
+        
+        # Try to get values using different possible key names
+        total = get_attribute_or_key(summary_data, 'total', 
+                get_attribute_or_key(summary_data, 'total_issues', '0'))
+        critical = get_attribute_or_key(summary_data, 'critical',
+                get_attribute_or_key(summary_data, 'critical_count', '0'))
+        high = get_attribute_or_key(summary_data, 'high',
+                get_attribute_or_key(summary_data, 'high_count', '0'))
+        medium = get_attribute_or_key(summary_data, 'medium',
+                get_attribute_or_key(summary_data, 'medium_count', '0'))
+        low = get_attribute_or_key(summary_data, 'low',
+                get_attribute_or_key(summary_data, 'low_count', '0'))
+        info = get_attribute_or_key(summary_data, 'info',
+                get_attribute_or_key(summary_data, 'info_count', '0'))
+        
+        col1.metric("Total", total)
+        col2.metric("Critical", critical)
+        col3.metric("High", high)
+        col4.metric("Medium", medium)
+        col5.metric("Low", low)
+        col6.metric("Info", info)
+    
+    # Get risk score (try both possible field names)
+    risk_score = None
+    if hasattr(report, 'risk_score'):
+        risk_score = report.risk_score
+    elif hasattr(report, 'risk_rating'):
+        risk_score = report.risk_rating
+    elif isinstance(report, dict):
+        risk_score = report.get('risk_score', report.get('risk_rating'))
+    
+    if risk_score is not None:
+        try:
+            formatted_score = f"{float(risk_score):.2f}"
+        except (ValueError, TypeError):
+            formatted_score = str(risk_score)
+        st.metric("Risk Score", formatted_score)
     
     # Add download button for the analysis report
     if st.session_state.analysis_results_pdf is not None:
         try:
             st.download_button(
-                label="📥 Download Code Analysis Report (PDF)",
+                label="📥 Download Security Analysis Report (PDF)",
                 data=st.session_state.analysis_results_pdf,
-                file_name="code_analysis_report.pdf",
+                file_name="security_analysis_report.pdf",
                 mime="application/pdf",
                 key="analysis_download_button"
             )
         except Exception as e:
             st.error(f"Error with download button: {str(e)}")
 
-    st.subheader("Detailed Vulnerabilities")
-    for vuln in report.vulnerabilities:
-        with st.expander(
-            f"{vuln.type} - {vuln.severity} - {vuln.location.file_path}:{vuln.location.start_line}"
-        ):
-            st.write(f"**Description:** {vuln.description}")
-            st.write(f"**Impact:** {vuln.impact}")
-            st.write(f"**Remediation:** {vuln.remediation}")
-            st.write(
-                f"**CWE ID:** [{vuln.cwe_id}](https://cwe.mitre.org/data/definitions/{vuln.cwe_id}.html)"
-            )
-            st.write(f"**OWASP Category:** {vuln.owasp_category}")
-            st.write(f"**CVSS Score:** {vuln.cvss_score}")
-            if vuln.references:
+    # Display vulnerabilities - handle both formats
+    st.subheader("Security Issues")
+    
+    # Get list of issues/vulnerabilities from either format
+    issues = []
+    if hasattr(report, 'vulnerabilities'):
+        issues = report.vulnerabilities
+    elif hasattr(report, 'issues'):
+        issues = report.issues
+    elif isinstance(report, dict):
+        issues = report.get('vulnerabilities', report.get('issues', []))
+    
+    for issue in issues:
+        # Get issue attributes based on format
+        if hasattr(issue, 'type'):
+            # Old format
+            issue_type = issue.type
+            severity = issue.severity
+            description = issue.description
+            impact = issue.impact
+            remediation = issue.remediation
+            cwe_id = issue.cwe_id
+            owasp_category = issue.owasp_category
+            cvss_score = issue.cvss_score
+            references = getattr(issue, 'references', [])
+            proof_of_concept = getattr(issue, 'proof_of_concept', '')
+            secure_example = getattr(issue, 'secure_code_example', '')
+            
+            # Location
+            if hasattr(issue, 'location'):
+                location = f"{issue.location.file_path}:{issue.location.start_line}"
+            else:
+                location = "Unknown"
+        else:
+            # New format
+            issue_type = get_attribute_or_key(issue, 'category', 'Unknown')
+            severity = get_attribute_or_key(issue, 'severity', 'Medium')
+            description = get_attribute_or_key(issue, 'description', 'No description')
+            impact = get_attribute_or_key(issue, 'impact', 'No impact information')
+            remediation = get_attribute_or_key(issue, 'remediation', 'No remediation information')
+            cwe_id = get_attribute_or_key(issue, 'cwe_id', '')
+            owasp_category = get_attribute_or_key(issue, 'owasp_category', 'Unknown')
+            cvss_score = get_attribute_or_key(issue, 'cvss_score', 'Unknown')
+            references = get_attribute_or_key(issue, 'references', [])
+            proof_of_concept = get_attribute_or_key(issue, 'proof_of_concept', '')
+            secure_example = get_attribute_or_key(issue, 'secure_alternative', 
+                                               get_attribute_or_key(issue, 'secure_code_example', ''))
+            
+            # Location
+            position = get_attribute_or_key(issue, 'position', {})
+            if position:
+                file_path = get_attribute_or_key(position, 'file_path', 'Unknown')
+                start_line = get_attribute_or_key(position, 'start_line', '?')
+                location = f"{file_path}:{start_line}"
+            else:
+                location = "Unknown"
+        
+        # Display the issue with an expander
+        with st.expander(f"{issue_type} - {severity} - {location}"):
+            st.write(f"**Description:** {description}")
+            st.write(f"**Impact:** {impact}")
+            st.write(f"**Remediation:** {remediation}")
+            
+            # Format CWE link
+            cwe_clean = str(cwe_id).replace('CWE-', '')
+            st.write(f"**CWE ID:** [{cwe_id}](https://cwe.mitre.org/data/definitions/{cwe_clean}.html)")
+            
+            st.write(f"**OWASP Category:** {owasp_category}")
+            st.write(f"**CVSS Score:** {cvss_score}")
+            
+            if references:
                 st.write("**References:**")
-                for ref in vuln.references:
+                for ref in references:
                     st.write(f"- [{ref}]({ref})")
-            if vuln.proof_of_concept:
+            
+            if proof_of_concept:
                 st.write("**Proof of Concept:**")
-                st.code(vuln.proof_of_concept, language="python")
-            if vuln.secure_code_example:
+                st.code(proof_of_concept, language="python")
+            
+            if secure_example:
                 st.write("**Secure Code Example:**")
-                st.code(vuln.secure_code_example, language="python")
+                st.code(secure_example, language="python")
 
-    st.subheader("Chained Vulnerabilities")
-    for chain in report.chained_vulnerabilities:
-        with st.expander(
-            f"Chain - Combined Severity: {chain.combined_severity}"
-        ):
-            st.write(f"**Attack Path:** {chain.attack_path}")
-            st.write(f"**Likelihood:** {chain.likelihood}")
-            st.write("**Prerequisites:**")
-            for prereq in chain.prerequisites:
-                st.write(f"- {prereq}")
-            st.write(
-                f"**Mitigation Priority:** {chain.mitigation_priority}"
-            )
+    # Display issue chains - handle both formats
+    chains_title = "Vulnerability Chains" if hasattr(report, 'chained_vulnerabilities') else "Security Issue Chains"
+    st.subheader(chains_title)
+    
+    # Get list of chains from either format
+    chains = []
+    if hasattr(report, 'chained_vulnerabilities'):
+        chains = report.chained_vulnerabilities
+    elif hasattr(report, 'issue_chains'):
+        chains = report.issue_chains
+    elif isinstance(report, dict):
+        chains = report.get('chained_vulnerabilities', report.get('issue_chains', []))
+    
+    if not chains:
+        st.write("No vulnerability chains detected.")
+    
+    for chain in chains:
+        # Get chain attributes based on format
+        if hasattr(chain, 'combined_severity'):
+            # Old format
+            combined_severity = chain.combined_severity
+            attack_info = getattr(chain, 'attack_path', 'No attack path')
+            likelihood = getattr(chain, 'likelihood', 'Unknown')
+            prerequisites = getattr(chain, 'prerequisites', [])
+            priority = getattr(chain, 'mitigation_priority', 'Unknown')
+        else:
+            # New format
+            combined_severity = get_attribute_or_key(chain, 'combined_severity', 'Unknown')
+            attack_info = get_attribute_or_key(chain, 'attack_scenario', 
+                                           get_attribute_or_key(chain, 'attack_path', 'No attack information'))
+            likelihood = get_attribute_or_key(chain, 'exploit_likelihood', 
+                                          get_attribute_or_key(chain, 'likelihood', 'Unknown'))
+            prerequisites = get_attribute_or_key(chain, 'prerequisites', [])
+            priority = get_attribute_or_key(chain, 'mitigation_priority', 'Unknown')
+        
+        # Display the chain with an expander
+        with st.expander(f"Chain - Combined Severity: {combined_severity}"):
+            st.write(f"**Attack Path:** {attack_info}")
+            st.write(f"**Likelihood:** {likelihood}")
+            
+            if prerequisites:
+                st.write("**Prerequisites:**")
+                for prereq in prerequisites:
+                    st.write(f"- {prereq}")
+            
+            st.write(f"**Mitigation Priority:** {priority}")
 
 # Display Vulnerability Scanning Results in main area
 if st.session_state.scan_completed and st.session_state.scan_results_pdf:

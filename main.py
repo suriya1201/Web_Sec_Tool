@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from datetime import datetime
 
 # Assuming these are in your project, adjust imports as needed
-from analyzer.code_analyzer import CodeAnalyzer
-from models.vulnerability import VulnerabilityReport
+from analyzer.code_inspector import CodeInspector
+from models.security_types import SecurityAnalysisReport
 # from utils.file_handler import process_uploaded_file  # No longer needed, we read directly
 
 app = FastAPI(
@@ -59,10 +59,10 @@ class AnalysisRequest(BaseModel):
     branch: str = "main"
     scan_depth: int = 3
 
-analyzer = CodeAnalyzer()  # Initialize the analyzer once
+analyzer = CodeInspector()  # Initialize the analyzer once
 
-@app.post("/analyze/file", response_model=VulnerabilityReport)
-async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityReport:
+@app.post("/analyze/file", response_model=SecurityAnalysisReport)
+async def analyze_file(files: List[UploadFile] = File(...)) -> SecurityAnalysisReport:
     """
     Analyze one or more files for security vulnerabilities.
     """
@@ -73,13 +73,13 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityRepo
             print(f"  Processing file: {file.filename}")
             file_content = await file.read()  # Read file content directly
             print(f"    File content read.  Size: {len(file_content)} bytes")
-            report = await analyzer.analyze_code(file_content, file.filename)
+            report = await analyzer.inspect_code(file_content, file.filename)
             print(f"    Analysis complete for {file.filename}.")
             reports.append(report)
 
         if len(reports) > 1:
             # Combine reports
-            combined_report = VulnerabilityReport(
+            combined_report = SecurityAnalysisReport(
                 timestamp=datetime.now(),  # Use current time for combined report
                 vulnerabilities=[vuln for r in reports for vuln in r.vulnerabilities],
                 chained_vulnerabilities=[chain for r in reports for chain in r.chained_vulnerabilities]
@@ -93,7 +93,7 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityRepo
             return reports[0]
         else:
             print("    No files to analyze, returning empty report")
-            return VulnerabilityReport(timestamp=datetime.now(), vulnerabilities=[], chained_vulnerabilities=[])
+            return SecurityAnalysisReport(timestamp=datetime.now(), vulnerabilities=[], chained_vulnerabilities=[])
 
     except Exception as e:
         print(f"    Error during analysis: {e}")
@@ -102,8 +102,8 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> VulnerabilityRepo
         print("--- Finishing analyze_file (FastAPI) ---")
 
 
-@app.post("/analyze/repository", response_model=VulnerabilityReport)
-async def analyze_repository(request: AnalysisRequest) -> VulnerabilityReport:
+@app.post("/analyze/repository", response_model=SecurityAnalysisReport)
+async def analyze_repository(request: AnalysisRequest) -> SecurityAnalysisReport:
     try:
         report = await analyzer.analyze_repository(
             request.repository_url,
