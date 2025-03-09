@@ -319,8 +319,8 @@ with st.sidebar:
                         <b>Wapiti:</b> A web application vulnerability scanner that audits the security of web applications.<br>
                         <b>SQLMap:</b> An open-source penetration testing tool that automates the process of detecting and exploiting SQL injection flaws.<br>
                         <b>XSStrike:</b> A tool for detecting and exploiting XSS vulnerabilities.<br>
-                        <b>COMMIX:</b> A tool for testing web applications for command injection vulnerabilities.(May take long)<br>
-                        <b>SSTImap:</b> A tool for detecting and exploiting Server-Side Template Injection vulnerabilities.(May take long)
+                        <b>COMMIX:</b> A tool for testing web applications for command injection vulnerabilities.(May take long EST 20-30 mins)<br>
+                        <b>SSTImap:</b> A tool for detecting and exploiting Server-Side Template Injection vulnerabilities.(May take long EST: 20-30 mins)<br>
                         <b>BrokenAccess:</b> A scanner that detects broken access control vulnerabilities such as IDOR and unauthorized access to protected resources.
                     </span>
                 </div>
