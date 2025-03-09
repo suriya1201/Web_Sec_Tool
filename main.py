@@ -104,7 +104,7 @@ async def analyze_file(files: List[UploadFile] = File(...)) -> SecurityAnalysisR
 @app.post("/analyze/repository", response_model=SecurityAnalysisReport)
 async def analyze_repository(request: AnalysisRequest) -> SecurityAnalysisReport:
     try:
-        report = await analyzer.analyze_repository(
+        report = await analyzer.inspect_repository(
             request.repository_url,
             request.branch,
             request.scan_depth
