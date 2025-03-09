@@ -1,13 +1,14 @@
 # Inspectify
 
 
-## Setup
+## Setup (recommended python version 3.11)
 
 1. Create venv in folder ```python -m venv venv```
 2. Activate venv ```call venv/Scripts/activate.bat```
 3. Install modules ```pip install -U -r requirements.txt```
 4. Run this list of commands to install the cmdline tools:
-```git clone https://github.com/commixproject/commix.git
+```
+git clone https://github.com/commixproject/commix.git
 git clone https://github.com/vladko312/SSTImap.git
 cd SSTImap
 pip install -U -r requirements.txt
