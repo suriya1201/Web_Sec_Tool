@@ -531,8 +531,8 @@ if st.session_state.analysis_completed and st.session_state.analysis_results:
         if hasattr(chain, 'combined_severity'):
             # Old format
             combined_severity = chain.combined_severity
-            attack_info = getattr(chain, 'attack_path', 'No attack path')
-            likelihood = getattr(chain, 'likelihood', 'Unknown')
+            attack_info = getattr(chain, 'attack_scenario', 'No attack path')
+            likelihood = getattr(chain, 'exploit_likelihood', 'Unknown')
             prerequisites = getattr(chain, 'prerequisites', [])
             priority = getattr(chain, 'mitigation_priority', 'Unknown')
         else:
