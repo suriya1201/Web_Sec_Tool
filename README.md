@@ -7,14 +7,14 @@
 2. Activate venv ```call venv/Scripts/activate.bat```
 3. Install modules ```pip install -U -r requirements.txt```
 4. Run this list of commands for the cmdline tools within the project folder:
-```git clone https://github.com/commixproject/commix.git```
-```git clone https://github.com/vladko312/SSTImap.git```
-```cd SSTImap```
-```pip install -U -r requirements.txt```
-```cd ..```
-```git clone https://github.com/s0md3v/XSStrike.git```
-```cd XSStrike```
-```pip install -U -r requirements.txt```
+```git clone https://github.com/commixproject/commix.git
+git clone https://github.com/vladko312/SSTImap.git
+cd SSTImap
+pip install -U -r requirements.txt
+cd ..
+git clone https://github.com/s0md3v/XSStrike.git
+cd XSStrike
+pip install -U -r requirements.txt```
 5. Create .env file with the contents:
 ```
 GEMINI_API_KEY=your_gemini_key
