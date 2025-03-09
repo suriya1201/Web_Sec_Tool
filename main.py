@@ -7,7 +7,6 @@ from datetime import datetime
 # Assuming these are in your project, adjust imports as needed
 from analyzer.code_inspector import CodeInspector
 from models.security_types import SecurityAnalysisReport
-# from utils.file_handler import process_uploaded_file  # No longer needed, we read directly
 
 app = FastAPI(
     title="Inspectify AI Agent",
