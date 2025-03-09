@@ -15,6 +15,7 @@ cd ..
 git clone https://github.com/s0md3v/XSStrike.git
 cd XSStrike
 pip install -U -r requirements.txt```
+
 5. Create .env file with the contents:
 ```
 GEMINI_API_KEY=your_gemini_key
